@@ -5,6 +5,23 @@ import tkinter as tk
 from tkinter import filedialog
 
 
+
+def import_static_image(file_path):
+    w, h, channels, data = dpg.load_image(file_path)
+
+    with dpg.texture_registry():
+        texture = dpg.add_static_texture(w, h, data)
+    return (texture)
+
+
+def load_project():
+    pass
+
+
+def save_project():
+    pass
+
+
 def print_me():
     pass  # Will be removed when homepage menu bar is complete
 
@@ -277,11 +294,11 @@ def make_graph_window(x_pos, y_pos, ht, wd):
 
         with dpg.table(header_row=False,
                        policy=dpg.mvTable_SizingFixedFit,
-                       no_host_extendX=True,                # don't force table to be same width as what is inside
-                       borders_innerV=True,
-                       borders_innerH=True,
-                       borders_outerV=True,
-                       borders_outerH=True,
+                       no_host_extendX=True,                
+                       borders_innerV=False,                   # set everything below to True to see table lines
+                       borders_innerH=False,
+                       borders_outerV=False,
+                       borders_outerH=False,
                        ):
 
             dpg.add_table_column(width_stretch=True, init_width_or_weight=1.0)
@@ -322,12 +339,19 @@ def make_graph_window(x_pos, y_pos, ht, wd):
 
                     else:
 
-                        dpg.add_spacer(height=(ht - 150) / 5)  # vertical spacing between the rows that include widgets
+                        dpg.add_spacer(height=(ht - 150) / 6)  # vertical spacing between the rows that include widgets
 
 
 dpg.create_context()
 
-dpg.create_viewport(title='Formula uOttawa Telemetry Software', width=800, height=600)
+
+with dpg.font_registry():
+    try:
+        font_path = ("C:/Windows/Fonts/segoeui.ttf")  # will fail on non-Windows
+        segoe = dpg.add_font(font_path, 18)
+        dpg.bind_font(segoe)  # only runs if add_font worked
+    except Exception:
+        pass
 
 
 with dpg.theme() as global_theme:
@@ -339,32 +363,112 @@ with dpg.theme() as global_theme:
 dpg.bind_theme(global_theme)
 
 
+dpg.create_viewport(title='Formula uOttawa Telemetry Software', width=800, height=600)
+
+
+with dpg.viewport_menu_bar(tag="Main Menu Bar"):  # Menu Bar will be revised and corrected soon
+
+    with dpg.menu(label="File"):
+        dpg.add_menu_item(label="Save Project", callback=lambda: save_project())
+        dpg.add_menu_item(label="Load Project", callback=lambda: load_project())
+        
+            
+    with dpg.menu(label="Graph"):
+        dpg.add_menu_item(label="Make New Graph", callback=lambda: make_graph_window(400, 150, 450, 770))
+            
+            
+
+    with dpg.menu(label="Filter"):
+        pass
+        
+    with dpg.menu(label="Trim"):
+        pass
+
+    with dpg.menu(label="Correlation"):
+        pass
+
+
 with dpg.window(tag="Home Window", no_move=True, no_resize=True, pos=(0, 0)):
+    
+    with dpg.table(header_row=False,
+                    policy=dpg.mvTable_SizingFixedFit,
+                    no_host_extendX=True,                
+                    borders_innerV=False,                # Set the following all to True to see the table lines
+                    borders_innerH=False,
+                    borders_outerV=False,
+                    borders_outerH=False,
+                    ):
 
-    with dpg.menu_bar():  # Menu Bar will be revised and corrected soon
+        dpg.add_table_column(width_stretch=True, init_width_or_weight=1.0)
+        dpg.add_table_column(width_fixed=True, init_width_or_weight=0.0)
+        dpg.add_table_column(width_stretch=True, init_width_or_weight=1.0)
+    
 
-        with dpg.menu(label="File"):
+        with dpg.table_row():
+            dpg.add_spacer(height=150)
+        
 
-            dpg.add_menu_item(label="Save", callback=print_me)
-            dpg.add_menu_item(label="Save As", callback=print_me)
+        with dpg.table_row():
 
-            with dpg.menu(label="Settings"):
+            dpg.add_spacer()
+            dpg.add_image(import_static_image("Assets/formula_logo.png"), height=150, width=699)
 
-                dpg.add_menu_item(label="Setting 1", callback=print_me, check=True)
-                dpg.add_menu_item(label="Setting 2", callback=print_me)
 
-        dpg.add_menu_item(label="Help", callback=make_graph_window(0, 18, 450, 775))
+        with dpg.table_row():
+            dpg.add_spacer(height=150)
 
-        with dpg.menu(label="Widget Items"):
 
-            dpg.add_checkbox(label="Pick Me", callback=print_me)
-            dpg.add_button(label="Press Me", callback=print_me)
-            dpg.add_color_picker(label="Color Me", callback=print_me)
+        with dpg.table_row():
+            dpg.add_spacer()
+            with dpg.group(horizontal=True, horizontal_spacing=4):
+
+                dpg.add_spacer(width=63)
+
+
+                with dpg.group():
+
+                    with dpg.group(horizontal=True):
+                        dpg.add_spacer(width=80)
+                        dpg.add_text("New Project")
+
+                    dpg.add_image_button(import_static_image("Assets/plus.png"), background_color=(0,0,0,70), frame_padding=0, width=250, height=250)
+
+
+                dpg.add_spacer(width=60)
+
+
+                with dpg.group():
+
+                    with dpg.group(horizontal=True):
+                        dpg.add_spacer(width=82)
+                        dpg.add_text("Load Project")
+
+                    dpg.add_image_button(import_static_image("Assets/file_icon.png"), background_color=(0,0,0,70), frame_padding=0, width=250, height=250)
+                dpg.add_spacer(width=63)
+
+
+        with dpg.table_row():
+            dpg.add_spacer(height=97)
+
+
+        with dpg.table_row():
+            dpg.add_text(default_value="Version: Pre-alpha", color=[255, 255, 255, 120])
+            
+
+
+
+
+
+        
+
+        
 
 
 dpg.set_primary_window("Home Window", True)
+dpg.set_viewport_large_icon("Assets/Formula_uottawa.ico")
 dpg.setup_dearpygui()
 dpg.set_viewport_pos([0, 0])
-dpg.show_viewport(maximized=True)  # prevents window sizing and positioning from failing
+dpg.show_viewport(maximized=True)  # prevents window sizing and positioning from failing on intital creation
 dpg.start_dearpygui()
 dpg.destroy_context()
+
