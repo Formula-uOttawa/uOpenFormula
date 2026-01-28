@@ -1,7 +1,7 @@
 # importMotecCSV.py
 
 import dearpygui.dearpygui as dpg
-from motec_importer import MoTeCImporter
+from data_manager import MoTeCImporter
 from pathlib import Path
 
 def on_file_selected(sender, app_data):
@@ -130,3 +130,45 @@ def main():
 
 if __name__ == "__main__":
     main()
+
+
+
+def file_path_check(user_data):
+    """Verifiy the user chose a file path.
+
+
+    Args:
+        user_data (tuple): Expected Values:
+            - "name" (str): name of the graph.
+            - "file_path" (input text widget): widget containing current chosen file path.
+            - "graph_type" (combo widget): the menu widget for types of graphs.
+            - "filter_type" (combo widget): the menu widget for types of filters.
+
+
+    Returns:
+        None, Calls graph_type_check function.
+    """
+
+    name, file_path, graph_type, filter_type = user_data
+    file_path = dpg.get_value(file_path)
+
+    if (file_path == ""):
+
+        if not dpg.does_item_exist("ask_file"):
+
+            with dpg.window(label="File Path", modal=True, tag="ask_file", no_title_bar=True, pos=[200, 200]):
+
+                dpg.add_text("Please Choose A File For the Graph Data!")
+                dpg.add_separator()
+                dpg.add_spacer(height=5)
+                path_display = dpg.add_input_text(hint="Selected File Path", readonly=True, width=300)
+                file_path_button = dpg.add_button(label="Choose File", callback=lambda: Choose_file(path_display))
+                dpg.add_spacer(height=5)
+                dpg.add_button(label="OK", width=75, callback=lambda: file_path_check((name, path_display, graph_type, filter_type)))
+
+    else:
+
+        user_data = (name, file_path, graph_type, filter_type)
+        dpg.delete_item("ask_file")
+        dpg.split_frame()  # force Dpg to generate a frame and load new widget states, prevents multiple modals
+        graph_type_check(user_data)

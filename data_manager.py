@@ -3,6 +3,19 @@
 import os
 import pandas as pd 
 
+
+"""Gathers data from the csv file.
+
+
+Args:
+    file_path (string): file path of csv containing data.
+
+
+Returns:
+    Tuple: List containing x data, followed by list containing y data.
+"""
+
+
 class MoTeCImporter:
 
     def __init__(self, path):
@@ -117,3 +130,5 @@ class MoTeCImporter:
         if all(self.df_excl_time[col].nunique() <= 1 for col in self.df_excl_time.columns):
             raise ValueError("All sensors show no variation (excluding 'Time' column).")
         print("[DEBUG] Data variation check (excluding 'Time') passed.")
+        
+        
