@@ -1,26 +1,75 @@
-# Harsh Patel
+# GUI and backend code for the homepage.
 
 import dearpygui.dearpygui as dpg
 import tkinter as tk
-from tkinter import filedialog
+from data_manager import DataManager
 
 class HomePage:
+    
+    file_path = ""
+    df = None
+    metadata = None
+    importer = DataManager()
+    
     def __init__(self):
-        
         self.show_home_page()
+    
+    def select_file(self):
+        """
+        Called automatically when the user picks a file in the file dialog.
+        """
+        
+        self.importer.select_file()
+        
+        # This runs load() + validations and returns the DataFrame
+        self.df = self.importer.import_and_validate()
+        
+        self.metadata = [f"{k}: {v}" for k, v in self.importer.metadata.items() if v]
+        
+        dpg.delete_item("Home Window", children_only=True)
+        
+        # The data preview window
+        with dpg.window(label="Raw Data",width=800,height=500):
+            data_array = self.df.to_numpy()
+            with dpg.table(header_row=True,
+                           policy=dpg.mvTable_SizingFixedFit,
+                           resizable=True,
+                           scrollX=True, scrollY=True,
+                           borders_innerH=True, borders_outerH=True,
+                           borders_innerV=True, borders_outerV=True):
+                for col in self.df.columns:
+                    dpg.add_table_column(label=str(col))
+                    
+                # Add Rows and Cells
+                for i in range(self.df.shape[0]):
+                    with dpg.table_row():
+                        for j in range(self.df.shape[1]):
+                            # Each cell is of type selectable, can also be text or input_text
+                            dpg.add_selectable(label=str(data_array[i, j]),
+                                               callback=lambda:None)
+        
+        #     dpg.set_value("metadata_box", "\n".join(meta_lines))
+        #     preview_text = df.to_string()
+        #     dpg.set_value("preview", preview_text)
+
+        # except Exception as e:
+            # If anything failed, show the error and clear preview
+            # TODO: create metadata and data preview box
+            # dpg.set_value("preview", "")
+            # dpg.set_value("metadata_box", "")
+            # pass
     
     def load_texture(self, file_path):
         w, h, channels, data = dpg.load_image(file_path)
-
         with dpg.texture_registry():
             texture = dpg.add_static_texture(w, h, data)
         return (texture)
     
     def show_home_page(self):
-    
+        
         dpg.create_context()
-
-
+        
+        # Load font
         with dpg.font_registry():
             try:
                 font_path = ("C:/Windows/Fonts/segoeui.ttf")  # will fail on non-Windows
@@ -29,107 +78,97 @@ class HomePage:
             except Exception:
                 pass
 
-
+        # Set theme
         with dpg.theme() as global_theme:
-
             with dpg.theme_component(dpg.mvButton):
-
                 dpg.add_theme_style(dpg.mvStyleVar_FrameRounding, 10.0)
-
         dpg.bind_theme(global_theme)
-
-
+        
+        # Create main viewport
         dpg.create_viewport(title='Formula uOttawa Telemetry Software', width=800, height=600)
-
-
-        with dpg.viewport_menu_bar(tag="Main Menu Bar"):  # Menu Bar will be revised and corrected soon
-
+        
+        # Add and populate menu bar at the top
+        with dpg.viewport_menu_bar(tag="Main Menu Bar"):  # TODO: revisions to menu bar
             with dpg.menu(label="File"):
                 dpg.add_menu_item(label="Save Project", callback=lambda: None)
-                dpg.add_menu_item(label="Load Project", callback=lambda: None)
+                dpg.add_menu_item(label="Load Project", callback=lambda: self.select_file())
                 
-                    
             with dpg.menu(label="Graph"):
                 dpg.add_menu_item(label="Make New Graph", callback=lambda: self.make_graph_window(400, 150, 450, 770))
-                    
-                    
-
+            
             with dpg.menu(label="Filter"):
-                pass
-                
+                dpg.add_menu_item(label="Low-pass", callback=lambda: None)
+                dpg.add_menu_item(label="High-pass", callback=lambda: None)
+                dpg.add_menu_item(label="Band-pass", callback=lambda: None)
+            
             with dpg.menu(label="Trim"):
                 pass
-
+            
             with dpg.menu(label="Correlation"):
-                pass
-
-
+                dpg.add_menu_item(label="Linear", callback=lambda: None)
+            
+        # Create the main window.
         with dpg.window(tag="Home Window", no_move=True, no_resize=True, pos=(0, 0)):
             
+            # This table houses the logo, new project, and load project buttons at the start of the program.
             with dpg.table(header_row=False,
                             policy=dpg.mvTable_SizingFixedFit,
                             no_host_extendX=True,                
-                            borders_innerV=False,                # Set the following all to True to see the table lines
+                            borders_innerV=False,
                             borders_innerH=False,
                             borders_outerV=False,
-                            borders_outerH=False,
-                            ):
-
+                            borders_outerH=False):
                 dpg.add_table_column(width_stretch=True, init_width_or_weight=1.0)
                 dpg.add_table_column(width_fixed=True, init_width_or_weight=0.0)
                 dpg.add_table_column(width_stretch=True, init_width_or_weight=1.0)
-            
-
+                
                 with dpg.table_row():
                     dpg.add_spacer(height=150)
                 
-
                 with dpg.table_row():
-
                     dpg.add_spacer()
                     dpg.add_image(self.load_texture("Assets/formula_logo.png"), height=150, width=699)
-
-
+                
                 with dpg.table_row():
                     dpg.add_spacer(height=150)
-
-
+                
                 with dpg.table_row():
                     dpg.add_spacer()
                     with dpg.group(horizontal=True, horizontal_spacing=4):
-
-                        dpg.add_spacer(width=63)
-
-
+                        dpg.add_spacer(width=63) # TODO: ask Harsh about this
+                        
                         with dpg.group():
-
                             with dpg.group(horizontal=True):
                                 dpg.add_spacer(width=80)
                                 dpg.add_text("New Project")
 
-                            dpg.add_image_button(self.load_texture("Assets/plus.png"), background_color=(0,0,0,70), frame_padding=0, width=250, height=250)
-
+                            dpg.add_image_button(self.load_texture("Assets/plus.png"),
+                                                 background_color=(0,0,0,70),
+                                                 frame_padding=0,
+                                                 width=250,
+                                                 height=250,
+                                                 callback=lambda:None)
 
                         dpg.add_spacer(width=60)
-
 
                         with dpg.group():
 
                             with dpg.group(horizontal=True):
                                 dpg.add_spacer(width=82)
                                 dpg.add_text("Load Project")
-
-                            dpg.add_image_button(self.load_texture("Assets/file_icon.png"), background_color=(0,0,0,70), frame_padding=0, width=250, height=250)
+                            dpg.add_image_button(self.load_texture("Assets/file_icon.png"),
+                                                 background_color=(0,0,0,70),
+                                                 frame_padding=0,
+                                                 width=250,
+                                                 height=250,
+                                                 callback=lambda: self.select_file())
                         dpg.add_spacer(width=63)
-
 
                 with dpg.table_row():
                     dpg.add_spacer(height=97)
 
-
                 with dpg.table_row():
                     dpg.add_text(default_value="Version: Pre-alpha", color=[255, 255, 255, 120])
-
 
             dpg.set_primary_window("Home Window", True)
             dpg.set_viewport_large_icon("Assets/Formula_uottawa.ico")
@@ -138,26 +177,6 @@ class HomePage:
             dpg.show_viewport(maximized=True)  # prevents window sizing and positioning from failing on intital creation
             dpg.start_dearpygui()
             dpg.destroy_context()
-        
-    def import_data(file_path):
-        
-        pass
-
-    def display_graph(name, file_path, graph_type, filter_type):
-        """Makes graph widget inside of new window.
-
-
-        Args:
-            name (string): name/label of the new window.
-            file_path (string): file path of csv containing data.
-            graph_type (string): type of graph wanted.
-            filter_type (string): type of filter to be applied to the data.
-
-
-        Returns:
-            None, Makes a new window and widget.
-        """
-        
 
     # TODO: This should be private 
     def graph_type_check(self, user_data):
