@@ -28,8 +28,10 @@ class HomePage:
         
         dpg.delete_item("Home Window", children_only=True)
         
+        self.show_windows()
+        
         # The data preview window
-        with dpg.window(label="Raw Data",width=800,height=500):
+        with dpg.window(label="Raw Data",width=800,height=500,no_close=True):
             data_array = self.df.to_numpy()
             with dpg.table(header_row=True,
                            policy=dpg.mvTable_SizingFixedFit,
@@ -58,6 +60,65 @@ class HomePage:
             # dpg.set_value("preview", "")
             # dpg.set_value("metadata_box", "")
             # pass
+    
+    def show_windows(self):
+        # List of windows that should be swappable
+        SWAPPABLE_WINDOWS = ["aero_window", "electronics_window"]
+
+        def switch_view(sender, app_data, user_data):
+            """Hides all windows, then shows the one passed in user_data."""
+            for win in SWAPPABLE_WINDOWS:
+                if win == user_data:
+                    dpg.configure_item(win, show=True)
+                else:
+                    dpg.configure_item(win, show=False)
+
+        # --- Navigation Menu ---
+        with dpg.window(label="Menu",
+                        pos=[0, 0],
+                        width=200,
+                        height=dpg.get_viewport_height(),
+                        no_close=True,
+                        no_move=True,
+                        no_collapse=True):
+            dpg.add_text("Dashboard Navigation")
+            dpg.add_separator()
+            # Pass the target window tag as user_data
+            dpg.add_button(label="Aero Data",
+                           user_data="aero_window",
+                           callback=switch_view,
+                           width=-1)
+            dpg.add_button(label="Electronics",
+                           user_data="electronics_window",
+                           callback=switch_view,
+                           width=-1)
+
+        # --- View 1: Aerodynamics (Shown by default) ---
+        with dpg.window(label="Aero Data View",
+                        tag="aero_window", pos=[200, 0],
+                        width=dpg.get_viewport_width(),
+                        height=dpg.get_viewport_height(),
+                        no_close=True,
+                        no_move=True,
+                        no_resize=True,
+                        no_collapse=True,
+                        show=True):
+            dpg.add_text("Real-time aerodynamic load data would go here.")
+            # Add your plots and readouts here
+
+        # --- View 2: Electronics (Hidden by default) ---
+        with dpg.window(label="Electronics View",
+                        tag="electronics_window",
+                        pos=[200, 0],
+                        width=dpg.get_viewport_width(),
+                        height=dpg.get_viewport_height(),
+                        no_close=True,
+                        no_move=True,
+                        no_resize=True,
+                        no_collapse=True,
+                        show=False):
+            dpg.add_text("Battery voltage and wiring harness diagnostics would go here.")
+            # Add your electrical gauges here
     
     def load_texture(self, file_path):
         w, h, channels, data = dpg.load_image(file_path)
@@ -174,7 +235,7 @@ class HomePage:
             dpg.set_viewport_large_icon("Assets/Formula_uottawa.ico")
             dpg.setup_dearpygui()
             dpg.set_viewport_pos([0, 0])
-            dpg.show_viewport(maximized=True)  # prevents window sizing and positioning from failing on intital creation
+            dpg.show_viewport(maximized=True)  # prevents window sizing and positioning from failing on initial creation
             dpg.start_dearpygui()
             dpg.destroy_context()
 
