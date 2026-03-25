@@ -1,21 +1,41 @@
 # motec_importer.py
 
 import os
-import pandas as pd 
+import pandas as pd
+import tkinter as tk
+from tkinter import filedialog
+from pathlib import Path
 
-class MoTeCImporter:
+"""Gathers data from the csv file.
 
-    def __init__(self, path):
+
+Args:
+    file_path (string): file path of csv containing data.
+
+
+Returns:
+    Tuple: List containing x data, followed by list containing y data.
+"""
+
+class DataManager:
+
+    def __init__(self, path=""):
         self.path = path            # Path to the CSV file
         self.df = None              # DataFrame to hold the loaded data
         self.df_excl_time = None    # DataFrame excluding 'Time' column
         self.metadata = {}          # Metadata that is located at the top of the csv files
         self.channels = {}          # Channel items with their units
         self.header_index = None    # Index of the header row
-
+    
+    def select_file(self):
+        """Select a file using windows UI."""
+        root = tk.Tk()
+        root.withdraw()
+        self.path = filedialog.askopenfilename()
+    
     def import_and_validate(self):
         """Global method to import and validate the MoTeC CSV file."""
-
+        
         if not os.path.exists(self.path):
             raise FileNotFoundError(f"File not found: {self.path}")
         
@@ -117,3 +137,22 @@ class MoTeCImporter:
         if all(self.df_excl_time[col].nunique() <= 1 for col in self.df_excl_time.columns):
             raise ValueError("All sensors show no variation (excluding 'Time' column).")
         print("[DEBUG] Data variation check (excluding 'Time') passed.")
+    
+def test_data_manager():
+    """Verifies that the MoTeCImporter can load all CSV files in the debugging_files folder."""
+    
+    GLOBAL_FOLDER = Path(__file__).resolve().parent / "debugging_files"
+    files = [str(p) for p in GLOBAL_FOLDER.rglob("*.csv")]
+    
+    for file in files[:-4]: # The last 4 are intentionally broken files (for testing)
+        try:
+            file_importer = DataManager(file)
+            file_importer.import_and_validate()
+        except Exception as e:
+            print(f"[DEBUG] Loader integrity check failed for {file}: {e}")
+            return
+    
+    print("[DEBUG] Loader integrity check passed for all files.")
+
+if __name__ == "__main__":
+    test_data_manager()
