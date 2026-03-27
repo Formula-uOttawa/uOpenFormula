@@ -14,6 +14,62 @@ class HomePage:
     def __init__(self):
         self.show_home_page()
     
+    def show_error_modal(self, tag, message):
+        if dpg.does_item_exist(tag):
+            dpg.delete_item(tag)
+        with dpg.window(label="Error", modal=True, tag=tag, no_title_bar=True, pos=[200, 200]):
+            dpg.add_text(message)
+            dpg.add_separator()
+            dpg.add_spacer(height=5)
+            dpg.add_button(label="OK", width=75, callback=lambda: dpg.delete_item(tag))
+    
+    def render_gg_diagram(self, graph_name):
+        if self.df is None:
+            self.show_error_modal("gg_error_modal", "Please load a project before generating a GG Diagram.")
+            return
+        
+        column_options = [
+            ("GPS LonAcc", "GPS LatAcc"),
+            ("LateralAcc", "VerticalAcc"),
+        ]
+        selected_pair = None
+        for x_col, y_col in column_options:
+            if x_col in self.df.columns and y_col in self.df.columns:
+                selected_pair = (x_col, y_col)
+                break
+        
+        if selected_pair is None:
+            self.show_error_modal(
+                "gg_error_modal",
+                "Missing GG columns. Expected either GPS LonAcc/GPS LatAcc or LateralAcc/VerticalAcc.",
+            )
+            return
+        
+        x_col, y_col = selected_pair
+        gg_df = self.df[[x_col, y_col]].dropna()
+        if gg_df.empty:
+            self.show_error_modal("gg_error_modal", "No valid GPS acceleration points found for GG Diagram.")
+            return
+        
+        x_vals = gg_df[x_col].tolist()
+        y_vals = gg_df[y_col].tolist()
+        limit = 3.5
+        
+        window_tag = f"gg_diagram_{graph_name}".replace(" ", "_")
+        if dpg.does_item_exist(window_tag):
+            dpg.delete_item(window_tag)
+        
+        with dpg.window(label=f"GG Diagram - {graph_name}", tag=window_tag, width=800, height=700):
+            with dpg.plot(label="GG Diagram", height=-1, width=-1):
+                dpg.add_plot_legend()
+                x_axis = dpg.add_plot_axis(dpg.mvXAxis, label=x_col)
+                y_axis = dpg.add_plot_axis(dpg.mvYAxis, label=y_col)
+                dpg.add_scatter_series(x_vals, y_vals, label="Acceleration Points", parent=y_axis)
+                dpg.add_line_series([-limit, limit], [0, 0], label="LatAcc = 0", parent=y_axis)
+                dpg.add_line_series([0, 0], [-limit, limit], label="LonAcc = 0", parent=y_axis)
+                dpg.set_axis_limits(x_axis, -limit, limit)
+                dpg.set_axis_limits(y_axis, -limit, limit)
+    
     def select_file(self):
         """
         Called automatically when the user picks a file in the file dialog.
@@ -261,7 +317,8 @@ class HomePage:
                                     "Histogram": ["None"],
                                     "Scatter Plot": ["High-Pass", "Low-Pass", "Band-Pass", "None"],
                                     "Pie Chart": ["None"],
-                                    "Heat Map": ["High-Pass", "Low-Pass", "Band-Pass", "None"]
+                                    "Heat Map": ["High-Pass", "Low-Pass", "Band-Pass", "None"],
+                                    "GG Diagram": ["None"]
                                     }
 
         name, file_path, graph_type, filter_type = user_data
@@ -277,7 +334,7 @@ class HomePage:
                     dpg.add_text("Please Reselect The Type of Graph!")
                     dpg.add_separator()
                     dpg.add_spacer(height=5)
-                    graph_type = dpg.add_combo(["Line Graph", "Bar Chart", "Histogram", "Scatter Plot", "Pie Chart", "Heat Map"],
+                    graph_type = dpg.add_combo(["Line Graph", "Bar Chart", "Histogram", "Scatter Plot", "Pie Chart", "Heat Map", "GG Diagram"],
                                             default_value="Choose Type of Graph")
 
                     filter_type = dpg.add_combo(["High-Pass", "Low-Pass", "Band-Pass", "None"],
@@ -288,9 +345,13 @@ class HomePage:
 
         else:
 
-            dpg.delete_item("ask_graph")
+            if dpg.does_item_exist("ask_graph"):
+                dpg.delete_item("ask_graph")
             dpg.split_frame()  # force Dpg to generate a frame and load new widget states, close modal before making graph
-            # make_graph(name, file_path, graph_type, filter_type)
+            if graph_type == "GG Diagram":
+                self.render_gg_diagram(name)
+            else:
+                self.show_error_modal("graph_not_implemented_modal", f"{graph_type} is not implemented yet.")
 
 
     def name_check(self, sender, app_data, user_data):
@@ -329,10 +390,10 @@ class HomePage:
 
         else:
 
-            user_data = (name, file_path, graph_type, filter_type)
-            dpg.delete_item("ask_name")
+            if dpg.does_item_exist("ask_name"):
+                dpg.delete_item("ask_name")
             dpg.split_frame()  # force Dpg to generate a frame and load new widget states, prevents multiple modals
-            # file_path_check(user_data)
+            self.graph_type_check((name, file_path, graph_type, filter_type))
 
 
     def make_graph_window(self, x_pos, y_pos, ht, wd):
@@ -385,7 +446,7 @@ class HomePage:
                         elif r == 5:
 
                             graph_type = dpg.add_combo(
-                                ["Line Graph", "Bar Chart", "Histogram", "Scatter Plot", "Pie Chart", "Heat Map"],
+                                ["Line Graph", "Bar Chart", "Histogram", "Scatter Plot", "Pie Chart", "Heat Map", "GG Diagram"],
                                 default_value="Choose Type of Graph",
                             )
 
