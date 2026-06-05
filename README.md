@@ -33,39 +33,20 @@ This project is licensed under the MIT License - see the [LICENSE](LICENSE) file
 <br />
 
 ## Setup
-First, download and install the [Anaconda installer](https://www.anaconda.com/download), this will allow you to organize the libraries we use. Then, open Anaconda prompt (as administrator) and set up a new environment with the following command:
+First, download and install the [Anaconda installer](https://www.anaconda.com/download), this will allow you to organize the libraries we use. Then, open Anaconda prompt (as administrator) and create the project environment from the provided spec file using:
 
-`conda create --name FSAEDataGUI python=3.8`
+`conda env create -f environment.yml`
 
-Then, activate the environment using:
+This will automatically create the environment, set the correct Python version, and install all required libraries in one step. Once it finishes, activate the environment using:
 
 `conda activate FSAEDataGUI`
-
-Once activated, you can begin installing the necessary libraries using:
-
-`conda install [libraryName]` and `pip install [libraryName]`
-
-List of libraries:
-* [dearpygui](https://github.com/hoffstadt/DearPyGui) (pip)
-* numpy (conda)
-* pandas (conda)
-* scipy (pip)
 
 Then, verify your dearpygui installation by running the following command:
 
 `python -m dearpygui.demo`
 
-You should see a demo program showing off the features. You can now install Git and your preferred integrated development environment (IDE) to contribute to the software! Make sure to set your environment to FSAEDataGUI in the IDE. You should also be familiar with using branches and making pull requests on Git, you can find many good tutorials on YouTube. We recommend using [GitHub Desktop](https://desktop.github.com/download/) and [VSCode](https://code.visualstudio.com/).
+You should see a demo program showing off some features. You can now install Git and your preferred integrated development environment (IDE) to contribute to the software! Make sure to set your environment to FSAEDataGUI in the IDE. You should also be familiar with using branches and making pull requests on Git, you can find many good tutorials on YouTube. We recommend using [GitHub Desktop](https://desktop.github.com/download/) and [VSCode](https://code.visualstudio.com/).
 
 <br />
 
-## Ongoing projects:
-* Data analysis tool
-  * Data loading
-  * Data pre-processing
-  * Main GUI and UX
-  * File annotation and management system
-* LLM chat bot
-* Automatic SharePoint physical backup
-* Data inspection tool
 ![Alt Text](https://i.redd.it/q0dd3k02unqb1.gif)
