@@ -47,9 +47,9 @@ Once activated, you can begin installing the necessary libraries using:
 
 List of libraries:
 * [dearpygui](https://github.com/hoffstadt/DearPyGui) (pip).
-* numpy (conda).
+* numpy (conda)
 * pandas (conda).
-* scipy (pip).
+* scipy (pip).qw
 
 Then, verify your dearpygui installation by running the following command:
 
