@@ -1,23 +1,16 @@
-# motec_importer.py
-
 import os
 import pandas as pd
-import tkinter as tk
-from tkinter import filedialog
 from pathlib import Path
 
-"""Gathers data from the csv file.
-
-
-Args:
-    file_path (string): file path of csv containing data.
-
-
-Returns:
-    Tuple: List containing x data, followed by list containing y data.
-"""
-
 class DataManager:
+    """Gathers data from a motec csv file.
+    
+    Args:
+        file_path (string): file path of csv containing data.
+
+    Returns:
+        Tuple: List containing x data, followed by list containing y data.
+    """
 
     def __init__(self, path=""):
         self.path = path            # Path to the CSV file
@@ -27,15 +20,12 @@ class DataManager:
         self.channels = {}          # Channel items with their units
         self.header_index = None    # Index of the header row
     
-    def select_file(self):
-        """Select a file using windows UI."""
-        root = tk.Tk()
-        root.withdraw()
-        self.path = filedialog.askopenfilename()
-    
-    def import_and_validate(self):
+    def import_and_validate(self, path):
         """Global method to import and validate the MoTeC CSV file."""
         
+        self.path = path
+        
+        #TODO: error handling
         if not os.path.exists(self.path):
             raise FileNotFoundError(f"File not found: {self.path}")
         
@@ -56,8 +46,9 @@ class DataManager:
             self.path, 
             skiprows=self.header_index,
             )
+        #TODO: error handling
         if df.empty:
-            raise ValueError("CSV loaded, no data found")
+            raise ValueError("CSV loaded, no data found.")
         
         # First row after header is the units row
         units_row = df.iloc[0]
@@ -67,6 +58,7 @@ class DataManager:
         df = df.iloc[1:].reset_index(drop=True)
         try:
             df = df.apply(pd.to_numeric)
+        #TODO: error handling
         except Exception as e:
             raise ValueError(f"Error converting data to numeric: {e}")
         
@@ -139,7 +131,7 @@ class DataManager:
         print("[DEBUG] Data variation check (excluding 'Time') passed.")
     
 def test_data_manager():
-    """Verifies that the MoTeCImporter can load all CSV files in the debugging_files folder."""
+    """Verifies that the class can load all CSV files in the debugging_files folder."""
     
     GLOBAL_FOLDER = Path(__file__).resolve().parent / "debugging_files"
     files = [str(p) for p in GLOBAL_FOLDER.rglob("*.csv")]
