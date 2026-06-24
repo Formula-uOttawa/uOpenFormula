@@ -12,8 +12,8 @@ class DataManager:
         Tuple: List containing x data, followed by list containing y data.
     """
 
-    def __init__(self, path=""):
-        self.path = path            # Path to the CSV file
+    def __init__(self):
+        self.path = ""              # Path to the CSV file
         self.df = None              # DataFrame to hold the loaded data
         self.df_excl_time = None    # DataFrame excluding 'Time' column
         self.metadata = {}          # Metadata that is located at the top of the csv files
@@ -129,22 +129,38 @@ class DataManager:
         if all(self.df_excl_time[col].nunique() <= 1 for col in self.df_excl_time.columns):
             raise ValueError("All sensors show no variation (excluding 'Time' column).")
         print("[DEBUG] Data variation check (excluding 'Time') passed.")
-    
-def test_data_manager():
+
+def _project_root() -> Path:
+    "Walks up the directory tree until it finds .git"
+    cur = Path(__file__).resolve()
+    # Walk upward until we find a marker that signals the project root.
+    # Common markers: pyproject.toml, setup.cfg, .git
+    for parent in cur.parents:
+        if (parent / ".git").exists():
+            return parent
+    # Fallback: just use the directory that contains this file
+    return cur.parent
+
+def _test_data_manager():
     """Verifies that the class can load all CSV files in the debugging_files folder."""
     
-    GLOBAL_FOLDER = Path(__file__).resolve().parent / "debugging_files"
+    GLOBAL_FOLDER = _project_root() / "_debugging_files"
     files = [str(p) for p in GLOBAL_FOLDER.rglob("*.csv")]
+    # TODO add check that files isnt empty
+    if len(files==0):
+        raise ImportError("Debugging files not found")
     
     for file in files[:-4]: # The last 4 are intentionally broken files (for testing)
         try:
-            file_importer = DataManager(file)
-            file_importer.import_and_validate()
+            file_importer = DataManager()
+            file_importer.import_and_validate(file)
         except Exception as e:
             print(f"[DEBUG] Loader integrity check failed for {file}: {e}")
             return
     
     print("[DEBUG] Loader integrity check passed for all files.")
+    
 
 if __name__ == "__main__":
-    test_data_manager()
+    _test_data_manager()
+    
