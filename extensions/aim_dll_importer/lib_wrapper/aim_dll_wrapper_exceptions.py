@@ -3,3 +3,6 @@ class AimDLLWrapperException(Exception):
 
 class AimDLLWrapperFunctionDoesNotExistError(AimDLLWrapperException):
     ...
+
+class AimDLLWrapperFunctionInitializationError(AimDLLWrapperException):
+    ...

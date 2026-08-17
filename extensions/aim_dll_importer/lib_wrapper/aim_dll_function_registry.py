@@ -3,7 +3,7 @@ from typing import Callable, Any
 
 from .aim_dll_wrapper_exceptions import (
     AimDLLWrapperFunctionDoesNotExistError,
-    AimDLLWrapperException
+    AimDLLWrapperException,
 )
 from .function_prototypes import (
     AIM_DLL_FUNCTION_PROTOTYPES,
@@ -25,9 +25,11 @@ class AimDLLFunctionRegistry:
     def __init__(self, dll: ctypes.CDLL) -> None:
         """Bind all known function prototypes to the loaded DLL.
 
-        Args:
-            dll: The loaded ``ctypes.CDLL`` instance containing the exported
-                functions.
+        Parameters
+        ----------
+        dll : ctypes.CDLL
+            The loaded ``ctypes.CDLL`` instance containing the exported
+            functions.
         """
         self._dll = dll
         self._function_registry = {}
@@ -42,6 +44,12 @@ class AimDLLFunctionRegistry:
 
         Each prototype is already a ``CFUNCTYPE`` class, so calling it with
         ``(function_name, self._dll)`` creates a typed function pointer.
+
+        Parameters
+        ----------
+        function_prototypes : dict[str, Any]
+            Mapping of exported function names to ``ctypes.CFUNCTYPE``
+            prototype classes.
         """
         for function_name, prototype in function_prototypes.items():
             # Create a typed callable bound to the DLL export.
@@ -55,8 +63,17 @@ class AimDLLFunctionRegistry:
     ) -> None:
         """Store a bound function in the registry.
 
-        Raises:
-            ValueError: If a function with the same name is already registered.
+        Parameters
+        ----------
+        function_name : str
+            Name of the exported DLL function.
+        function : Callable[..., Any]
+            Typed ctypes function pointer bound to the DLL.
+
+        Raises
+        ------
+        ValueError
+            If a function with the same name is already registered.
         """
         if function_name in self._function_registry:
             raise ValueError(
@@ -68,14 +85,21 @@ class AimDLLFunctionRegistry:
     def get_function(self, function_name: str) -> Callable[..., Any]:
         """Retrieve a registered DLL function by name.
 
-        Args:
-            function_name: Name of the exported DLL function.
+        Parameters
+        ----------
+        function_name : str
+            Name of the exported DLL function.
 
-        Returns:
-            The typed ctypes function pointer.
+        Returns
+        -------
+        Callable[..., Any]
+            The typed ctypes function pointer wrapped to raise
+            ``AimDLLWrapperException`` on call failures.
 
-        Raises:
-            AimDLLWrapperFunctionDoesNotExistError: If the function has not been registered.
+        Raises
+        ------
+        AimDLLWrapperFunctionDoesNotExistError
+            If the function has not been registered.
         """
         if function_name not in self._function_registry:
             raise AimDLLWrapperFunctionDoesNotExistError(
