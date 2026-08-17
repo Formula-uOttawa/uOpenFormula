@@ -1,8 +1,8 @@
 from typing import Optional
 
-from aim_dll_importer.aim_file import AimFile
-from aim_dll_importer.aim_file_context_manager import AimFileContextManager
-from aim_dll_importer.aim_types import AimLap, AimChannel, AimGPSChannel
+from .aim_file import AimFile
+from .aim_file_context_manager import AimFileContextManager
+from .aim_types import AimLap, AimChannel, AimGPSChannel
 
 
 class AimSession:

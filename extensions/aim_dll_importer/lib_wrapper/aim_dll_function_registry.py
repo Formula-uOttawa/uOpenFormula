@@ -1,7 +1,7 @@
 import ctypes
 from typing import Callable, Any
 
-from aim_dll_importer.lib_wrapper.function_prototypes import (
+from .function_prototypes import (
     AIM_DLL_FUNCTION_PROTOTYPES,
 )
 

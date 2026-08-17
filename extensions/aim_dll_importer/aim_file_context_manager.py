@@ -1,7 +1,7 @@
 from pathlib import Path
 from typing import Optional
 
-from aim_dll_importer.aim_dll_importer_exceptions import (
+from .aim_dll_importer_exceptions import (
     AimImporterInternalSystemError,
     AimImporterFileNotFoundError,
     AimImporterFailedToParseFileError,
@@ -10,8 +10,8 @@ from aim_dll_importer.aim_dll_importer_exceptions import (
     AimImporterNoSessionPresentError,
     AimImporterInvalidGPSFrequencyError,
 )
-from aim_dll_importer.aim_file import AimFile
-from aim_dll_importer.aim_types import (
+from .aim_file import AimFile
+from .aim_types import (
     AimChannelMetadata,
     AimChannelSamples,
     AimChannel,
@@ -19,8 +19,8 @@ from aim_dll_importer.aim_types import (
     AimGPSChannel
 )
 
-from aim_dll_importer.lib_wrapper.aim_dll_wrapper import AimLibraryWrapper
-from aim_dll_importer.lib_wrapper.aim_dll_wrapper_exceptions import AimDLLWrapperException
+from .lib_wrapper.aim_dll_wrapper import AimLibraryWrapper
+from .lib_wrapper.aim_dll_wrapper_exceptions import AimDLLWrapperException
 
 
 class AimFileContextManager:
@@ -53,13 +53,45 @@ class AimFileContextManager:
             Base directory where AIM files are located.
         """
         self._base_path = Path(base_path)
-        self._lib_wrapper = AimLibraryWrapper("DLL_PATH")
-
-        self._init_gps_channels(sample_freq)
         self._license_path = license_path
 
+        self._init_lib_wrapper()
+        self._init_gps_channels(sample_freq)
+
+
+    def _init_lib_wrapper(self):
+        """Initialize the AIM DLL library wrapper.
+
+        The DLL is loaded from the ``lib`` directory located relative to this
+        module.
+
+        Raises
+        ------
+        AimImporterInternalSystemError
+            If the library wrapper cannot be initialized.
+        """
+        dir_path = Path(__file__).resolve().parent
+        dll_path = dir_path / "lib" / "MatLabXRK-2022-64-ReleaseU.dll"
+        self._lib_wrapper = AimLibraryWrapper(str(dll_path))
+
     def _init_gps_channels(self, sample_freq: float):
+        """Configure the GPS channel sample frequency.
+
+        Parameters
+        ----------
+        sample_freq : float
+            GPS sample frequency to configure in the AIM DLL.
+
+        Raises
+        ------
+        AimImporterInternalSystemError
+            If the AIM DLL reports a failure while setting the sample frequency
+            or raises an internal exception.
+        AimImporterInvalidGPSFrequencyError
+            If the specified GPS sample frequency is invalid.
+        """
         self._sample_freq = sample_freq
+
         try:
             result = self._lib_wrapper.set_gps_sample_frequency(self._sample_freq)
 

@@ -1,7 +1,7 @@
 import ctypes
 from typing import Optional
 
-from aim_dll_importer.lib_wrapper.aim_dll_function_registry import (
+from .aim_dll_function_registry import (
     AimDLLFunctionRegistry,
 )
 

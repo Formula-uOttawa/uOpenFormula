@@ -1,7 +1,7 @@
 from typing import Optional
 
-from aim_dll_importer.aim_file_context_manager import AimFileContextManager
-from aim_dll_importer.aim_session import AimSession
+from .aim_file_context_manager import AimFileContextManager
+from .aim_session import AimSession
 
 
 class AimFile:
