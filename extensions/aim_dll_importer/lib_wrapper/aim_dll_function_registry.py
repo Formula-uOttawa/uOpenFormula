@@ -1,6 +1,10 @@
 import ctypes
 from typing import Callable, Any
 
+from .aim_dll_wrapper_exceptions import (
+    AimDLLWrapperFunctionDoesNotExistError,
+    AimDLLWrapperException
+)
 from .function_prototypes import (
     AIM_DLL_FUNCTION_PROTOTYPES,
 )
@@ -74,8 +78,16 @@ class AimDLLFunctionRegistry:
             KeyError: If the function has not been registered.
         """
         if function_name not in self._function_registry:
-            raise KeyError(
+            raise AimDLLWrapperFunctionDoesNotExistError(
                 f"Function '{function_name}' is not registered."
             )
 
-        return self._function_registry[function_name]
+        callable_ = self._function_registry[function_name]
+
+        def aim_dll_callable(*args: Any, **kwargs: Any) -> Any:
+            try:
+                return callable_(*args, **kwargs)
+            except Exception as e:
+                raise AimDLLWrapperException(e)
+
+        return aim_dll_callable
