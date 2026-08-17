@@ -75,7 +75,7 @@ class AimDLLFunctionRegistry:
             The typed ctypes function pointer.
 
         Raises:
-            KeyError: If the function has not been registered.
+            AimDLLWrapperFunctionDoesNotExistError: If the function has not been registered.
         """
         if function_name not in self._function_registry:
             raise AimDLLWrapperFunctionDoesNotExistError(
