@@ -1,7 +1,7 @@
 from io import TextIOWrapper
 from typing import TextIO
 
-from parsers.data_layouts.ld_lap_info import LdLapInfo
+from ..data_layouts.ld_lap_info import LdLapInfo
 
 
 class LdLapInfoWriter:

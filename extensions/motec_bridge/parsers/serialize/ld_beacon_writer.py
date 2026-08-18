@@ -1,6 +1,6 @@
 from typing import TextIO
 
-from parsers.data_layouts.ld_beacon import LdBeacon
+from .data_layouts.ld_beacon import LdBeacon
 
 
 class LdBeaconWriter:

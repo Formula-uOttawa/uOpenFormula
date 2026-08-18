@@ -1,8 +1,8 @@
 from typing import BinaryIO
 
-from parsers.data_layouts.ld_channel import LdChannel
-from parsers.serialize.magic_numbers import MAGIC_SIZE, MAGIC_TYPE
-from parsers.serialize.writer_layout import WriterLayout
+from .data_layouts.ld_channel import LdChannel
+from .serialize.magic_numbers import MAGIC_SIZE, MAGIC_TYPE
+from .serialize.writer_layout import WriterLayout
 
 
 class LdChannelWriter:

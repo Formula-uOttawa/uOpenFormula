@@ -1,7 +1,7 @@
 from typing import BinaryIO
 
-from parsers.data_layouts.ld_head import LdHead
-from parsers.serialize.magic_numbers import (
+from ..data_layouts.ld_head import LdHead
+from ..serialize.magic_numbers import (
     CHANNEL_META_PTR,
     EVENT_PTR,
     DEVICE_SERIAL,
@@ -10,7 +10,7 @@ from parsers.serialize.magic_numbers import (
     MAX_COMMENT_SIZE,
     HEADER_CONST_DATA
 )
-from parsers.serialize.writer_layout import WriterLayout
+from ..serialize.writer_layout import WriterLayout
 
 class LdHeadWriter:
 

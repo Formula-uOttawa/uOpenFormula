@@ -1,10 +1,10 @@
-from parsers.data_layouts.ld_data import LdData
-from parsers.serialize.ld_beacon_writer import LdBeaconWriter
-from parsers.serialize.ld_channel_writer import LdChannelWriter
-from parsers.serialize.ld_head_writer import LdHeadWriter
-from parsers.serialize.ld_lap_info_writer import LdLapInfoWriter
-from parsers.serialize.magic_numbers import HEADER_PTR
-from parsers.serialize.writer_layout import WriterLayout
+from ..data_layouts.ld_data import LdData
+from .ld_beacon_writer import LdBeaconWriter
+from .ld_channel_writer import LdChannelWriter
+from .ld_head_writer import LdHeadWriter
+from .ld_lap_info_writer import LdLapInfoWriter
+from .magic_numbers import HEADER_PTR
+from .writer_layout import WriterLayout
 
 
 class LdDataWriter:
