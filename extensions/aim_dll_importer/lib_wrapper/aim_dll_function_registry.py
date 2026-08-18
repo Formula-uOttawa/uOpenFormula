@@ -38,7 +38,7 @@ class AimDLLFunctionRegistry:
 
     def _register_all_prototypes(
         self,
-        function_prototypes: dict[str, Any],
+        function_prototypes: dict[str, Callable],
     ) -> None:
         """Bind every prototype to its DLL function.
 
