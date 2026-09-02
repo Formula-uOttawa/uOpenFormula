@@ -1,41 +1,31 @@
-# motec_importer.py
-
 import os
 import pandas as pd
-import tkinter as tk
-from tkinter import filedialog
 from pathlib import Path
 
-"""Gathers data from the csv file.
-
-
-Args:
-    file_path (string): file path of csv containing data.
-
-
-Returns:
-    Tuple: List containing x data, followed by list containing y data.
-"""
-
 class DataManager:
+    """Gathers data from a motec csv file.
+    
+    Args:
+        file_path (string): file path of csv containing data.
 
-    def __init__(self, path=""):
-        self.path = path            # Path to the CSV file
+    Returns:
+        Tuple: List containing x data, followed by list containing y data.
+    """
+
+    def __init__(self):
+        self.path = ""              # Path to the CSV file
         self.df = None              # DataFrame to hold the loaded data
         self.df_excl_time = None    # DataFrame excluding 'Time' column
         self.metadata = {}          # Metadata that is located at the top of the csv files
         self.channels = {}          # Channel items with their units
         self.header_index = None    # Index of the header row
     
-    def select_file(self):
-        """Select a file using windows UI."""
-        root = tk.Tk()
-        root.withdraw()
-        self.path = filedialog.askopenfilename()
-    
-    def import_and_validate(self):
+    def import_and_validate(self, path):
         """Global method to import and validate the MoTeC CSV file."""
         
+        self.path = path
+        
+        #TODO: error handling
         if not os.path.exists(self.path):
             raise FileNotFoundError(f"File not found: {self.path}")
         
@@ -56,8 +46,9 @@ class DataManager:
             self.path, 
             skiprows=self.header_index,
             )
+        #TODO: error handling
         if df.empty:
-            raise ValueError("CSV loaded, no data found")
+            raise ValueError("CSV loaded, no data found.")
         
         # First row after header is the units row
         units_row = df.iloc[0]
@@ -67,6 +58,7 @@ class DataManager:
         df = df.iloc[1:].reset_index(drop=True)
         try:
             df = df.apply(pd.to_numeric)
+        #TODO: error handling
         except Exception as e:
             raise ValueError(f"Error converting data to numeric: {e}")
         
@@ -137,22 +129,38 @@ class DataManager:
         if all(self.df_excl_time[col].nunique() <= 1 for col in self.df_excl_time.columns):
             raise ValueError("All sensors show no variation (excluding 'Time' column).")
         print("[DEBUG] Data variation check (excluding 'Time') passed.")
+
+def _project_root() -> Path:
+    "Walks up the directory tree until it finds .git"
+    cur = Path(__file__).resolve()
+    # Walk upward until we find a marker that signals the project root.
+    # Common markers: pyproject.toml, setup.cfg, .git
+    for parent in cur.parents:
+        if (parent / ".git").exists():
+            return parent
+    # Fallback: just use the directory that contains this file
+    return cur.parent
+
+def _test_data_manager():
+    """Verifies that the class can load all CSV files in the debugging_files folder."""
     
-def test_data_manager():
-    """Verifies that the MoTeCImporter can load all CSV files in the debugging_files folder."""
-    
-    GLOBAL_FOLDER = Path(__file__).resolve().parent / "debugging_files"
+    GLOBAL_FOLDER = _project_root() / "_debugging_files"
     files = [str(p) for p in GLOBAL_FOLDER.rglob("*.csv")]
+    # TODO add check that files isnt empty
+    if len(files==0):
+        raise ImportError("Debugging files not found")
     
     for file in files[:-4]: # The last 4 are intentionally broken files (for testing)
         try:
-            file_importer = DataManager(file)
-            file_importer.import_and_validate()
+            file_importer = DataManager()
+            file_importer.import_and_validate(file)
         except Exception as e:
             print(f"[DEBUG] Loader integrity check failed for {file}: {e}")
             return
     
     print("[DEBUG] Loader integrity check passed for all files.")
+    
 
 if __name__ == "__main__":
-    test_data_manager()
+    _test_data_manager()
+    

@@ -10,7 +10,8 @@
             "type": "debugpy",
             "request": "launch",
             "program": "${workspaceFolder}/main.py",
-            "console": "integratedTerminal"
+            "console": "integratedTerminal",
+            "address": "127.0.0.1" // This forces IPv4 loopback, needed when running this while connected to uOttawa wifi
         }
     ]
 }
