@@ -2,15 +2,19 @@ from pathlib import Path
 
 import pytest
 
-from aero_laptime_comparison.aero_laptime_data import AeroLaptimeData
+from aero_laptime_data import AeroLaptimeData
 from aero_laptime_comparison.track_alignment import TrackAlignment
 from core.data_manager import DataManager
 
+# Path to the directory where test_aero_laptime.py lives
+CURRENT_DIR = Path(__file__).resolve().parent
 
-PROJECT_ROOT = Path(__file__).resolve().parents[1]
-DATA_DIR = PROJECT_ROOT / "tests" / "data"
+# Point directly to the data folder next to this file
+DATA_DIR = CURRENT_DIR / "data"
+
 BASELINE_PATH = DATA_DIR / "baseline.csv"
 AERO_PATH = DATA_DIR / "aero.csv"
+
 
 
 def log_completed(message):
@@ -20,7 +24,7 @@ def log_completed(message):
 
 def load_csv(path, dataset_name):
     manager = DataManager()
-    dataframe = manager.import_and_validate(str(path))
+    dataframe = manager.import_and_validate(str(path)) 
     log_completed(
         f"Loaded and validated the {dataset_name} dataset from {path} "
         f"({len(dataframe)} rows, {len(dataframe.columns)} columns)."
@@ -30,7 +34,7 @@ def load_csv(path, dataset_name):
 
 @pytest.fixture
 def loaded_datasets():
-    baseline_manager, baseline_df = load_csv(BASELINE_PATH, "baseline")
+    baseline_manager, baseline_df = load_csv(BASELINE_PATH, "baseline") 
     aero_manager, aero_df = load_csv(AERO_PATH, "aero")
     return baseline_manager, baseline_df, aero_manager, aero_df
 
@@ -44,13 +48,8 @@ def test_full_aero_laptime_comparison(loaded_datasets):
     ) = loaded_datasets
 
     data = AeroLaptimeData()
-    data.baseline_manager = baseline_manager
-    data.aero_manager = aero_manager
-    data.baseline_df = baseline_df
-    data.aero_df = aero_df
-    data.baseline_metadata = baseline_manager.metadata
-    data.aero_metadata = aero_manager.metadata
-    data._update_common_channels()
+    data.load_baseline(BASELINE_PATH)
+    data.load_aero(AERO_PATH)
     log_completed(
         f"Prepared AeroLaptimeData with {len(data.get_common_channels())} "
         "channels shared by both datasets."

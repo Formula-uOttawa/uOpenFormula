@@ -1,4 +1,10 @@
+import sys
+import os
 import pandas as pd
+# Go up one level to /workspaces/uOpenFormula and add it to the Python path
+sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), "..")))
+
+# Now Python can see the 'core' folder
 from core.data_manager import DataManager
 
 
@@ -31,18 +37,17 @@ class AeroLaptimeData:
     # FILE LOADING
     # ---------------------------------------------------------
 
-    def load_baseline(self):
+    def load_baseline(self, path=None):
         """
-        Opens a file dialog and loads Dataset A.
+        Loads Dataset A from an explicit path.
         """
 
-        print("\nSelect BASELINE / NO AERO CSV")
+        if path is None:
+            raise ValueError(
+                "A baseline CSV path is required."
+            )
 
-        self.baseline_manager.select_file()
-
-        self.baseline_df = (
-            self.baseline_manager.import_and_validate()
-        )
+        self.baseline_df = self.baseline_manager.import_and_validate(path)
 
         self.baseline_metadata = (
             self.baseline_manager.metadata
@@ -57,18 +62,17 @@ class AeroLaptimeData:
 
         return self.baseline_df
 
-    def load_aero(self):
+    def load_aero(self, path=None):
         """
-        Opens a file dialog and loads Dataset B.
+        Loads Dataset B from an explicit path.
         """
 
-        print("\nSelect AERO CSV")
+        if path is None:
+            raise ValueError(
+                "An aero CSV path is required."
+            )
 
-        self.aero_manager.select_file()
-
-        self.aero_df = (
-            self.aero_manager.import_and_validate()
-        )
+        self.aero_df = self.aero_manager.import_and_validate(path)
 
         self.aero_metadata = (
             self.aero_manager.metadata

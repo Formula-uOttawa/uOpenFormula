@@ -239,21 +239,10 @@ class TrackAlignment:
             )
 
         # -----------------------------------------------------
-        # Convert GPS to local Cartesian coordinates.
-        #
-        # Equirectangular approximation.
-        # Appropriate for the relatively small area of a
-        # race track.
+        # Distance between consecutive GPS points.
         # -----------------------------------------------------
-
-        lat0 = np.radians(
-            track["latitude"].iloc[0]
-        )
-
-        lon0 = np.radians(
-            track["longitude"].iloc[0]
-        )
-
+        
+        
         lat = np.radians(
             track["latitude"].to_numpy()
         )
@@ -262,24 +251,23 @@ class TrackAlignment:
             track["longitude"].to_numpy()
         )
 
+        # First GPS point becomes the local origin.
+        lat0 = lat[0]
+        lon0 = lon[0]
+        
         x = (
-            self.EARTH_RADIUS_M
+            6_371_000.0
             * (lon - lon0)
             * np.cos(lat0)
         )
 
         y = (
-            self.EARTH_RADIUS_M
+            6_371_000.0
             * (lat - lat0)
         )
-
         track["x"] = x
         track["y"] = y
-
-        # -----------------------------------------------------
-        # Distance between consecutive GPS points.
-        # -----------------------------------------------------
-
+        
         dx = np.diff(
             x,
             prepend=x[0],
@@ -289,7 +277,7 @@ class TrackAlignment:
             y,
             prepend=y[0],
         )
-
+        
         segment_distance = np.sqrt(
             dx ** 2 + dy ** 2
         )
