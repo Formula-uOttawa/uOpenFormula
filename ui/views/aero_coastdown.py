@@ -17,4 +17,4 @@ class AeroCoastdownView:
         """Called after new data loads to update content."""
         if dpg.does_item_exist("coastdown_placeholder"):
             dpg.delete_item("coastdown_placeholder")
-        # build your plots here using self.dm.df
+        # build your plots here using self.df
