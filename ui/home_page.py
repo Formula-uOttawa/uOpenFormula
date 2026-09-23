@@ -327,7 +327,7 @@ class HomePage:
             label="Navigation", tag="navbar",
             pos=[0, 0], width=200,
             height=dpg.get_viewport_height(),
-            no_close=True, no_move=True, no_collapse=True,
+            no_close=True, no_move=True, no_collapse=True, no_resize=True
         ):
             self._build_sidebar_for("home")
 
