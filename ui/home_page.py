@@ -104,6 +104,9 @@ class HomePage:
     def _build_nav_tree(self):
         self.nav = Tree()
         self.nav.create_node("Home", "home")
+
+        self.nav.create_node("Raw Data", "raw_data", parent="home")
+
         self.nav.create_node("Aerodynamics", "aero", parent="home")
         self.nav.create_node("Coastdown", "aero_coastdown", parent="aero")
         self.nav.create_node("Yaw Rate", "aero_yawrate", parent="aero")
@@ -255,7 +258,7 @@ class HomePage:
                                                  frame_padding=0,
                                                  width=250,
                                                  height=250,
-                                                 callback=lambda:None)
+                                                 callback=lambda:self.new_project())
 
                         dpg.add_spacer(width=60)
 
@@ -269,7 +272,7 @@ class HomePage:
                                                  frame_padding=0,
                                                  width=250,
                                                  height=250,
-                                                 callback=lambda: self.select_file_tk())
+                                                 callback=lambda: self.first_file_selection())
                         dpg.add_spacer(width=63)
 
                 with dpg.table_row():
@@ -277,7 +280,19 @@ class HomePage:
 
                 with dpg.table_row():
                     dpg.add_text(default_value="Version: Pre-alpha", color=[255, 255, 255, 120])
-    
+
+
+    def first_file_selection(self):
+
+        self.select_file_tk()
+        self.new_project()
+
+        
+    def new_project(self):
+        dpg.delete_item("Landing Page", children_only=True)
+                
+        self.show_home()
+
     def select_file_tk(self):
         """
         Select a file using native operating system UI.
@@ -286,19 +301,23 @@ class HomePage:
         root = tk.Tk()
         root.withdraw()
         self.file_path = filedialog.askopenfilename()
+        root.destroy() # DO NOT DELETE EVER
         
         # This runs load() + validations and returns the DataFrame
         # TODO: this makes two copies of df? If so investigate making this not a hard copy.
         self.df = self.importer.import_and_validate(self.file_path)
         
+        #self.show_dataframe()
+
+
         
-        dpg.delete_item("Landing Page", children_only=True)
-        
-        self.show_home()
-        
-        # The data preview window
-        # TODO: move this
-        with dpg.window(label="Raw Data",width=800,height=500,no_close=True):
+    def show_dataframe(self):
+        #TODO make docstrings
+
+        if dpg.does_item_exist("show_data"):
+            dpg.delete_item("show_data")
+
+        with dpg.window(tag="show_data", label="Raw Data",width=800,height=500,no_close=True):
             data_array = self.df.to_numpy()
             with dpg.table(header_row=True,
                            policy=dpg.mvTable_SizingFixedFit,
@@ -316,7 +335,7 @@ class HomePage:
                             # Each cell is of type selectable, can also be text or input_text
                             dpg.add_selectable(label=str(data_array[i, j]),
                                                callback=lambda:None)
-        
+
     
     def show_home(self):
         self._build_nav_tree()
