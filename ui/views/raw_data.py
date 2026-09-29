@@ -30,7 +30,7 @@ class RawDataView:
                 resizable=True,
                 scrollX=True, scrollY=True,
                 borders_innerH=True, borders_outerH=True,
-                borders_innerV=True, borders_outerV=True):
+                borders_innerV=True, borders_outerV=True,height = dpg.get_viewport_height() - 100):
                 for col in self.df.columns:
                     dpg.add_table_column(label=str(col))
                             
