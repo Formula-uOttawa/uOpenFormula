@@ -53,6 +53,8 @@ class OilStarvationView:
         dpg.set_value("Oil Pressure High", [self.lat_g_high, self.lon_g_high])
         dpg.set_value("Oil Upper Limit Timed", [self.time, self.oil_upper_timed])
         dpg.set_value("Oil Lower Limit Timed", [self.time, self.oil_lower_timed])
+        dpg.set_value("Excess Oil Pressure", [self.time, self.pressure_excess])
+        dpg.configure_item("Excess Oil Pressure", label=f"Excess Oil Pressure ({self.avg_excess:.1f})")
         dpg.configure_item("Oil Pressure Low", label=f"Oil Pressure Low ({self.low_percent:.1f}%)")
         dpg.configure_item("Oil Pressure Normal", label=f"Oil Pressure Normal ({self.normal_percent:.1f}%)")
         dpg.configure_item("Oil Pressure High", label=f"Oil Pressure High ({self.high_percent:.1f}%)")
@@ -91,6 +93,7 @@ class OilStarvationView:
         self.lon_g_normal = []
         self.lat_g_high = []
         self.lon_g_high = []
+        self.pressure_excess = []
 
         for i in range(len(self.time)):
             for j in range(len(self.oil_operating_RPM)):
@@ -122,6 +125,11 @@ class OilStarvationView:
         self.normal_percent = len(self.lat_g_normal)/len(self.lat_g)*100
         self.high_percent = len(self.lat_g_high)/len(self.lat_g)*100
 
+        for i in range(len(self.time)):
+            self.pressure_excess.append(self.oil_p_scaled[i] - (self.oil_lower_timed[i] + self.oil_upper_timed[i]) / 2 )
+
+        self.avg_excess = (sum(self.pressure_excess) / len(self.pressure_excess) / 100 )
+
     def refresh(self):
         """Called after new data loads to update content."""
 
@@ -137,6 +145,7 @@ class OilStarvationView:
         self.lat_g_scaled = (self.df["GPS LatAcc"] * 10).tolist()
         self.long_g_scaled = (self.df["GPS LonAcc"] * 10).tolist()
         self.long_g = self.df["GPS LonAcc"].tolist()
+        self.rad_temp = (self.df["ECU ECT"] * 100).tolist()
         self.classify_oil_values()
                                  
                                   
@@ -185,9 +194,10 @@ class OilStarvationView:
                 dpg.add_plot_axis(dpg.mvYAxis, label="", tag="y_axis_rpm_and_oil")
                 dpg.add_line_series(x=self.time, y=self.oil_p_scaled, label="Oil Pressure (PSI) X 100", parent="y_axis_rpm_and_oil")
                 dpg.add_line_series(x=self.time, y=self.rpm, label="RPM", parent="y_axis_rpm_and_oil")
-                dpg.add_line_series(x=self.time, y=self.oil_upper_timed, tag = "Oil Upper Limit Timed", label="Oil Pressure Upper Limit ", parent="y_axis_rpm_and_oil")
-                dpg.add_line_series(x=self.time, y=self.oil_lower_timed, tag = "Oil Lower Limit Timed", label="Oil Pressure Lower Limit ", parent="y_axis_rpm_and_oil")
-               
+                dpg.add_line_series(x=self.time, y=self.oil_upper_timed, tag = "Oil Upper Limit Timed", label="Oil Pressure Upper Limit", parent="y_axis_rpm_and_oil")
+                dpg.add_line_series(x=self.time, y=self.oil_lower_timed, tag = "Oil Lower Limit Timed", label="Oil Pressure Lower Limit", parent="y_axis_rpm_and_oil")
+                dpg.add_line_series(x=self.time, y=self.pressure_excess, tag = "Excess Oil Pressure", label=f"Excess Oil Pressure ({self.avg_excess:.1f})", parent="y_axis_rpm_and_oil")
+                dpg.add_line_series(x=self.time, y=self.rad_temp, label="Temp (C) X 100", parent="y_axis_rpm_and_oil")
                 
         with dpg.child_window(tag="G-forces & Oil Pressure graph", show=False):
                             
