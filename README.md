@@ -49,4 +49,43 @@ You should see a demo program showing off some features. You can now install Git
 
 <br />
 
+## Oil Starvation Analysis
+
+The Oil Starvation tool helps our team analyze the oil-system behaviour during vehicle operation and identify any potential losses in oil pressure which causes a lack of lubrication inside the engine. A phenomenon known as oil starvation. It's important for motorsport because oil starvation results in worn cylinder walls, gasket damage, and eventually a blown engine. By Analiyzing oil pressure, oil temperature, engine RPM, and G-Forces, we can better understand how the engine's lubrication system performs under diffrent driving conditions and stress.
+
+<br />
+
+
+
+
+<p align="center">
+  <img src="Assets/ReadMeAssets/Distrobution_graph.png" width="400" alt="Oil pressure overview">
+  <img src="Assets/ReadMeAssets/GforcePlot.png" width="400" alt="G-Force Plot">
+  <img src="Assets/ReadMeAssets/RpmVSPressure.png" width="400" alt="RPM vs Pressure">
+  <img src="Assets/ReadMeAssets/gforceGGplot.png" width="400" alt="Starvation event">
+  <img src="Assets/ReadMeAssets/RpmAndPressure.png" width="600" alt="RPM and Pressure">
+</p>
+
+
+
+<br />
+
+### **Key Features**
+
+- **Oil Pressure Monitoring:** Visulizes oil pressure alongside engine RPM, oil temperature, and excess oil pressure.
+- **G-Force Analysis:** Helps identify whether acceleration, braking, or cornering contributes to oil pressure starvation.
+- **Severity Analysis:** Measures how far oil pressure falls outside its ideal range, helping the team evaluate the effectiveness of design improvements.
+- **Customizable Thresholds:** Enables the team to adjust acceptable oil pressure ranges for different engine speeds.
+
+
+### **Why It Matters**
+
+During aggressive cornering, braking, and acceleration, engine oil can shift inside the oil pan, reducing the oil supply to critical engine components. Using RPM-dependent pressure thresholds, the system automatically identifies abnormal pressure readings and allows the team to investigate their frequency, duration, and severity. These findings can be compared with physical engine inspections, including checks for cylinder wall damage, bearing wear, and other signs of engine damage. By identifying when and under what conditions oil pressure drops occur, our team can investigate potential lubrication issues, evaluate design improvements, make data-driven decisions to improve engine reliability, and ultimately maximize vehicle performance on track.
+
+<br />
+
+
+
+
+
 ![Alt Text](https://i.redd.it/q0dd3k02unqb1.gif)
