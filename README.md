@@ -62,11 +62,8 @@ The Oil Starvation tool helps our team analyze the oil-system behaviour during v
   <img src="Assets/ReadMeAssets/Distrobution_graph.png" width="400" alt="Oil pressure overview">
   <img src="Assets/ReadMeAssets/GforcePlot.png" width="400" alt="G-Force Plot">
   <img src="Assets/ReadMeAssets/RpmVSPressure.png" width="400" alt="RPM vs Pressure">
-</p>
-
-<p align="center">
-  <img src="Assets/ReadMeAssets/gforceGGplot.png" width="500" alt="Starvation event">
-  <img src="Assets/ReadMeAssets/RpmAndPressure.png" width="500" alt="RPM and Pressure">
+  <img src="Assets/ReadMeAssets/gforceGGplot.png" width="400" alt="Starvation event">
+  <img src="Assets/ReadMeAssets/RpmAndPressure.png" width="600" alt="RPM and Pressure">
 </p>
 
 
