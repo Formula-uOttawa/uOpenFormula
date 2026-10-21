@@ -47,6 +47,52 @@ Then, verify your dearpygui installation by running the following command:
 
 You should see a demo program showing off some features. You can now install Git and your preferred integrated development environment (IDE) to contribute to the software! Make sure to set your environment to FSAEDataGUI in the IDE. You should also be familiar with using branches and making pull requests on Git, you can find many good tutorials on YouTube. We recommend using [GitHub Desktop](https://desktop.github.com/download/) and [VSCode](https://code.visualstudio.com/).
 
+## Updating Libraries
+The exe is built automatically by GitHub Actions, and it installs libraries **only from `environment.yml`**. Installing a library with `pip` or `conda` does not update that file, so if you add a library and forget to list it, your code will work on your machine but the exe build will fail or crash on launch with `ModuleNotFoundError`.
+
+Whenever you add, remove, or change a library:
+
+1. **Edit `environment.yml` by hand** in the same commit as the code that uses the library.
+   - Libraries that come from `pip` go under the `pip:` section, with a pinned version:
+```yaml
+     - pip:
+         - dearpygui==2.1.1
+         - your-new-library==1.2.3
+```
+   - Libraries that come from `conda` go under `dependencies:` (the same way the existing ones are listed).
+2. **Update your local environment from the file** so it matches what the build will use:
+```
+   conda env update -f environment.yml --prune
+```
+3. **Run the program** from source to confirm it still works.
+4. **Commit `environment.yml` together with your code changes** and open your pull request.
+
+## Publishing a new release
+
+1. Merge your changes into `main` and wait for the **Build exe** run in the Actions tab to go green.
+2. Open a terminal in the project folder and make sure you're on the latest `main`:
+```
+   git checkout main
+   git pull
+```
+3. Create a tag on that commit. Use a new version number each time (`v1.0.0`, `v1.0.1`, `v1.1.0`, ...):
+```
+   git tag v1.0.1
+```
+4. Push the tag (a normal `git push` does not send tags):
+```
+   git push origin v1.0.1
+```
+5. Watch the **Actions** tab. When the run for your tag goes green, the release appears on the Releases page with `uOpenFormula.exe` attached and auto-generated release notes.
+
+### Fixing a mistake
+If you tagged the wrong commit or used the wrong version number:
+```
+git tag -d v1.0.1
+git push origin --delete v1.0.1
+```
+Then delete the release on the Releases page (if one was created) and redo the steps above.
+
 <br />
 
 ![Alt Text](https://i.redd.it/q0dd3k02unqb1.gif)
