@@ -65,7 +65,11 @@ Whenever you add, remove, or change a library:
    conda env update -f environment.yml --prune
 ```
 3. **Run the program** from source to confirm it still works.
-4. **Commit `environment.yml` together with your code changes** and open your pull request.
+4. **Test** the environment file.
+```
+    conda --no-plugins install --solver classic --dry-run --file environment.yml
+```
+5. **Commit `environment.yml` together with your code changes** and open your pull request.
 
 ## Publishing a new release
 
