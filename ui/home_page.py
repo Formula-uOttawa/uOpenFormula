@@ -108,6 +108,7 @@ class HomePage:
         self.nav.create_node("Coastdown", "aero_coastdown", parent="aero")
         self.nav.create_node("Yaw Rate", "aero_yawrate", parent="aero")
         self.nav.create_node("Lap time", "aero_laptime", parent="aero")
+        self.nav.create_node("Side Pod", "aero_sidepod", parent="aero")
         
         self.nav.create_node("Electrical", "elec", parent="home")
         self.nav.create_node("Monitor", "elec_monitor", parent="elec")
