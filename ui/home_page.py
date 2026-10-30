@@ -7,6 +7,8 @@ from treelib import Tree
 import pkgutil
 import ui.views as views_package
 import importlib
+from pathlib import Path
+from core.log_data_manager import data_manager_log
 
 def _load_view_map():
     """Auto-discover all view classes from ui/views/.
@@ -29,19 +31,27 @@ VIEW_MAP = _load_view_map()
 class HomePage:
     """Stores the logic of the home and landing page gui. TODO do this docstring"""
     
-    file_path = ""
+    file_paths = []
     df = None
     importer = DataManager()
+    
     
     SWAPPABLE_WINDOWS = []  # populated dynamically from tree
     
     def __init__(self):
         self.show_home_page()
+      
     
     def show_home_page(self):
         """Initializes the homepage and loads all necessary elements."""
         
         dpg.create_context()
+        # adding emojis
+        with dpg.font_registry():
+         with dpg.font("C:/Windows/Fonts/seguisym.ttf", 18) as symbol_font:
+             dpg.add_font_chars([0x2705, 0x274C])
+
+        dpg.bind_font(symbol_font)
         
         # Set theme for button rounding.
         with dpg.theme() as global_theme:
@@ -85,7 +95,7 @@ class HomePage:
         with dpg.viewport_menu_bar(tag="Main Menu Bar"):  # TODO: revisions to menu bar
             with dpg.menu(label="File"):
                 dpg.add_menu_item(label="Save Project", callback=lambda: None)
-                dpg.add_menu_item(label="Load Project", callback=lambda: self.select_file_tk())
+                dpg.add_menu_item(label="Load Project", callback=lambda: DataManager.select_file_tk(self.show_home,self.get_max_files, self.refresh_active_view))
                 
             with dpg.menu(label="Graph"):
                 dpg.add_menu_item(label="Make New Graph", callback=lambda: self.make_graph_window(400, 150, 450, 770))
@@ -111,6 +121,7 @@ class HomePage:
         self.nav.create_node("Coastdown", "aero_coastdown", parent="aero")
         self.nav.create_node("Yaw Rate", "aero_yawrate", parent="aero")
         self.nav.create_node("Lap time", "aero_laptime", parent="aero")
+        self.nav.create_node("example", "example_view", parent="aero")
         
         self.nav.create_node("Electrical", "elec", parent="home")
         self.nav.create_node("Monitor", "elec_monitor", parent="elec")
@@ -158,6 +169,11 @@ class HomePage:
             self._refresh_sidebar()
             self._switch_main_view(view_key)
 
+    def refresh_active_view(self):
+        view = self.views.get(getattr(self, "active_view_key", None))
+        if view and hasattr(view, "refresh"):
+            view.refresh()
+
     def pop_nav(self):
         """Go up one level."""
         if len(self.nav_stack) > 1:
@@ -185,27 +201,30 @@ class HomePage:
         for win in self.SWAPPABLE_WINDOWS:
             if dpg.does_item_exist(win):
                 dpg.configure_item(win, show=(win == view_key))
+        if view_key in self.views:
+          self.views[view_key].refresh()
+          self.active_view_key = view_key
 
     def _refresh_sidebar(self):
         """Wipe and redraw sidebar contents for the current nav stack top."""
-        dpg.delete_item("navbar", children_only=True)
+        dpg.delete_item("nav_links", children_only=True)
         self._build_sidebar_for(self.nav_stack[-1])
     
     def _build_sidebar_for(self, view_key):
         node = self.nav.get_node(view_key)
         children = self.nav.children(view_key)
 
-        dpg.add_text(node.tag, parent="navbar")
-        dpg.add_separator(parent="navbar")
+        dpg.add_text(node.tag, parent="nav_links")
+        dpg.add_separator(parent="nav_links")
 
         if len(self.nav_stack) > 1:
             dpg.add_button(
                 label="<- Back",
                 callback=lambda: self.pop_nav(),
                 width=-1,
-                parent="navbar",
+                parent="nav_links",
             )
-            dpg.add_separator(parent="navbar")
+            dpg.add_separator(parent="nav_links")
 
         for child in children:
             dpg.add_button(
@@ -214,9 +233,12 @@ class HomePage:
                 user_data=child.identifier,
                 callback=lambda s, a, u: self.push_nav(u),
                 width=-1,
-                parent="navbar",
+                parent="nav_links",
             )
-    
+    def get_max_files(self):
+        view_key = getattr(self, "active_view_key", None)
+        view = self.views.get(view_key)
+        return getattr(view, "max_files", 0)
     def show_landing(self):
         # Create the main window.
         with dpg.window(tag="Landing Page", no_move=True, no_resize=True, pos=(0, 0)):
@@ -272,7 +294,7 @@ class HomePage:
                                                  frame_padding=0,
                                                  width=250,
                                                  height=250,
-                                                 callback=lambda: self.first_file_selection())
+                                                 callback=lambda: DataManager.select_file_tk(self.show_home,self.get_max_files, self.refresh_active_view))
                         dpg.add_spacer(width=63)
 
                 with dpg.table_row():
@@ -348,6 +370,9 @@ class HomePage:
             height=dpg.get_viewport_height(),
             no_close=True, no_move=True, no_collapse=True, no_resize=True
         ):
+            dpg.add_group(tag="nav_links")
+            dpg.add_separator()
+            dpg.add_group(tag="import_selector")
             self._build_sidebar_for("home")
 
         # Create all view windows (hidden by default except first)
@@ -356,6 +381,8 @@ class HomePage:
                 continue
             # First child of home is the default
             default_view = self.nav.children("home")[0].identifier
+            self.active_view_key = default_view
+            
             is_first = (node.identifier == default_view)
             with dpg.window(
                 label=node.tag,
