@@ -26,12 +26,18 @@ jobs:
           activate-environment: FSAEDataGUI
           auto-activate: false
 
+      - name: Test sensor monitor
+        shell: bash -el {0}
+        run: |
+          conda activate FSAEDataGUI
+          MPLBACKEND=Agg python -m unittest discover -s tests -t . -q
+
       - name: Build exe
         shell: bash -el {0}
         run: |
           conda activate FSAEDataGUI
           pip install pyinstaller
-          pyinstaller --onefile --windowed --name uOpenFormula --icon Assets/Formula_uottawa.ico --version-file version_info.txt --add-data "Assets;Assets" main.py
+          pyinstaller --onefile --windowed --name uOpenFormula --icon Assets/Formula_uottawa.ico --version-file version_info.txt --additional-hooks-dir hooks --add-data "Assets;Assets" main.py
 
 
       - uses: actions/upload-artifact@v4

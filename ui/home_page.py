@@ -182,6 +182,8 @@ class HomePage:
     
     def _switch_main_view(self, view_key):
         """Show only the window matching view_key, hide all others."""
+        if view_key == "elec_monitor" and view_key in self.views:
+            self.views[view_key].refresh()
         for win in self.SWAPPABLE_WINDOWS:
             if dpg.does_item_exist(win):
                 dpg.configure_item(win, show=(win == view_key))

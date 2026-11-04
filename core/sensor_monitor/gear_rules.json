@@ -1,0 +1,11 @@
+{
+  "version": "0.5",
+  "status": "provisional",
+  "confirmation_samples": 3,
+  "no_shift_minimum_confirmed_coverage": 0.9,
+  "maximum_gap_factor": 3.0,
+  "maximum_forward_gear": 6,
+  "large_jump_code_difference": 3,
+  "large_jump_endpoint_seconds": 0.5,
+  "persistent_bad_seconds": 1.0
+}

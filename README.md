@@ -36,6 +36,7 @@ This project is licensed under the MIT License - see the [LICENSE](LICENSE) file
 3. [Publishing a New Release](#publishing-a-new-release)
 5. [Analyses](#analyses)
    - [Oil Starvation](#oil-starvation)
+   - [Sensor Monitor](#sensor-monitor)
 
 ## Setup
 First, download and install the [Anaconda installer](https://www.anaconda.com/download), this will allow you to organize the libraries we use. Then, open Anaconda prompt (as administrator) and create the project environment from the provided spec file using:
@@ -106,6 +107,20 @@ Then delete the release on the Releases page (if one was created) and redo the s
 
 
 ## Analyses
+### Sensor Monitor
+
+Open **Electrical → Monitor** to review nine sensor channels from an AiM CSV.
+The page provides a sensor table, whole-run traces, a selected-channel plot,
+gear findings and evidence, timing options, and optional HTML/JSON export.
+Only gear checks are implemented; other logged channels are marked **Not assessed**.
+
+Use the project recording, or choose **Open CSV** within the monitor. To review a
+sensor recording without loading unrelated analyses, choose **New Project** on
+the landing page and then **Electrical → Monitor → Open CSV**.
+
+See [Sensor Monitor usage and architecture](docs/sensor-monitor.md) for the
+analysis scope, module structure, and validation commands.
+
 ### Oil Starvation
 
 The Oil Starvation tool helps our team analyze the oil-system behaviour during vehicle operation and identify any potential losses in oil pressure which causes a lack of lubrication inside the engine. A phenomenon known as oil starvation. It's important for motorsport because oil starvation results in worn cylinder walls, gasket damage, and eventually a blown engine. By Analiyzing oil pressure, oil temperature, engine RPM, and G-Forces, we can better understand how the engine's lubrication system performs under diffrent driving conditions and stress.

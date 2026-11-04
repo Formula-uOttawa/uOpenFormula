@@ -1,0 +1,212 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="color-scheme" content="light dark">
+<title>Sensor run review</title>
+<style>
+*{box-sizing:border-box}body{margin:0;background:#f4f6f8;color:#17212b;font:14px/1.5 -apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif}
+:root{--paper:#fff;--ink:#17212b;--muted:#566476;--line:#dce2e9;--blue:#1665ad;--selected:#eef5fe;--amber:#936000;--amberbg:#fff3d6;--green:#176647;--greenbg:#e7f5ed;--graybg:#edf0f3}
+main{max-width:1260px;margin:0 auto;padding:28px 24px 40px}h1{font-size:28px;margin:0 0 6px;letter-spacing:-.5px}h2{font-size:20px;margin:0 0 5px}h3{font-size:14px;margin:0 0 8px}
+p{margin:6px 0 12px}.muted,small{color:var(--muted)}small{display:block;font-size:12px}.file{overflow-wrap:anywhere}.eyebrow{color:var(--blue);font-weight:700;text-transform:uppercase;font-size:11px;letter-spacing:1px;margin-bottom:5px}
+.summary{display:flex;gap:10px;flex-wrap:wrap;margin:22px 0 10px}.summary>div{min-width:155px;background:var(--paper);border:1px solid var(--line);border-radius:8px;padding:12px 16px}.summary strong{font-size:23px;margin-right:9px}
+.panel{background:var(--paper);border:1px solid var(--line);border-radius:10px;margin-top:20px;overflow:hidden}.panel-heading{padding:17px 20px;border-bottom:1px solid var(--line)}.panel-heading p{margin-bottom:0}
+.table-scroll{overflow-x:auto}table{border-collapse:collapse;width:100%;min-width:860px;text-align:left}th{font-size:11px;letter-spacing:.4px;text-transform:uppercase;color:var(--muted);padding:12px 14px;background:var(--graybg);white-space:nowrap}td{padding:12px 14px;border-top:1px solid var(--line);vertical-align:middle}th:nth-child(1){width:21%}th:nth-child(2){width:15%}th:nth-child(3){width:23%}th:nth-child(4){width:14%}th:nth-child(5){width:27%}
+tr.selected{background:var(--selected)}tr:hover{background:var(--selected)}button{font:inherit;cursor:pointer;color:var(--ink);background:var(--paper);border:1px solid var(--line);border-radius:6px;padding:7px 11px}button:hover{border-color:var(--blue)}button:focus-visible{outline:3px solid var(--blue);outline-offset:2px}button[aria-pressed=true]{background:var(--selected);border-color:var(--blue);color:var(--blue)}.sensor-button{background:transparent!important;border:0;padding:3px 0;text-align:left;font-weight:650;color:var(--blue)}.sensor-button small{font-weight:400}
+.badge{display:inline-block;padding:3px 8px;border-radius:5px;font-size:12px;font-weight:650;background:var(--graybg);white-space:nowrap}.review{color:var(--amber);background:var(--amberbg)}.no_findings{color:var(--green);background:var(--greenbg)}.scope{margin-top:5px;max-width:150px}.spark{width:100%;min-width:170px;height:47px;display:block}.trend-note{font-size:10px;color:var(--muted);margin:2px 0 0}.numeric{font-variant-numeric:tabular-nums;white-space:nowrap}.observation{font-size:12px}
+.inspector{padding:20px}.detail-heading{display:flex;justify-content:space-between;gap:16px;align-items:flex-start;flex-wrap:wrap}.toolbar{display:flex;gap:7px;flex-wrap:wrap;margin:14px 0}.plot{width:100%;height:auto;display:block}.empty{padding:35px 20px;background:var(--graybg);border-radius:7px;color:var(--muted)}.explanation{background:var(--graybg);border-radius:7px;padding:14px 16px;margin:14px 0}.explanation p:last-child{margin-bottom:0}.detail-grid{display:grid;grid-template-columns:1fr 1fr;gap:24px;margin-top:20px}ul{padding-left:19px;margin:8px 0}li{margin:6px 0}.facts{display:flex;gap:24px;flex-wrap:wrap;margin:14px 0}.facts span{font-variant-numeric:tabular-nums}.facts small{font-size:11px}.events{display:flex;gap:7px;flex-wrap:wrap;margin-top:14px}.check{border-bottom:1px solid var(--line);padding:8px 0}.check:last-child{border:0}details{border-top:1px solid var(--line);padding:14px 20px}summary{cursor:pointer;font-weight:600}.foot{font-size:12px;margin-top:15px;color:var(--muted)}.key{display:inline-block;width:17px;height:3px;background:var(--blue);margin-right:6px;vertical-align:middle}.key.event{background:var(--amber)}svg text{fill:var(--muted);font-family:inherit}svg .grid{stroke:var(--line);stroke-width:1}svg .trace{fill:none;stroke:var(--blue);stroke-width:1.5;stroke-linejoin:round}svg .event{fill:var(--amber);stroke:var(--amber)}
+@media(prefers-color-scheme:dark){:root{--paper:#18212c;--ink:#e3eaf2;--muted:#a6b4c5;--line:#344152;--blue:#78b8f5;--selected:#223750;--amber:#f7c66a;--amberbg:#463719;--green:#83d9b0;--greenbg:#193d30;--graybg:#222e3c}body{background:#101720;color:var(--ink)}}
+@media(max-width:640px){main{padding:18px 12px 30px}h1{font-size:24px}.summary{gap:7px}.summary>div{min-width:0;flex:1;padding:9px}.summary strong{display:block;margin:0}.panel-heading,.inspector{padding:14px}.detail-grid{grid-template-columns:1fr;gap:14px}.toolbar button{font-size:12px}.facts{gap:15px}.foot{font-size:11px}}
+.detail-extra{margin-top:18px;padding:12px 0 0}.detail-extra>summary{font-size:13px;color:var(--muted)}.detail-extra[open]>summary{margin-bottom:16px}
+.events label{display:flex;align-items:center;gap:10px;flex-wrap:wrap;max-width:100%}.events select{font:inherit;color:var(--ink);background:var(--paper);border:1px solid var(--line);border-radius:6px;padding:7px;max-width:100%}
+</style>
+</head>
+<body>
+<main>
+<div class="eyebrow">Formula uOttawa · local log analysis</div>
+<h1>Sensor run review</h1>
+<p id="source" class="file"></p>
+<p id="timing" class="muted"></p>
+<div id="summary" class="summary" aria-label="Channel results"></div>
+<small>Only gear checks are implemented. Results describe available evidence; they do not certify sensor health.</small>
+<section class="panel" aria-labelledby="overview-title">
+  <div class="panel-heading"><h2 id="overview-title">Run overview</h2><p class="muted">Select a sensor to inspect its recorded data and assessment.</p></div>
+  <div class="table-scroll"><table aria-label="Sensor results"><thead><tr><th scope="col">Sensor</th><th scope="col">Result</th><th scope="col" id="trend-heading">Whole-run trend</th><th scope="col">Numeric data</th><th scope="col">Main observation</th></tr></thead><tbody id="sensor-rows"></tbody></table></div>
+</section>
+<section class="panel" aria-label="Selected sensor detail"><div id="inspector" class="inspector"></div></section>
+<section class="panel"><details><summary>Report scope and limitations</summary><ul id="limitations"></ul><p class="foot">The JSON file saved beside this report contains the same report data and the complete gear analysis. Other CSV channels remain in your source recording.</p></details></section>
+<p class="foot"><span class="key"></span>Recorded value &nbsp; <span class="key event"></span>Review finding. Empty sections represent missing or invalid readings, or detected timestamp gaps. No smoothing or replacement values are applied.</p>
+</main>
+<script id="report-data" type="application/json">__RUN_REPORT_JSON__</script>
+<script>
+"use strict";
+const report = JSON.parse(document.getElementById("report-data").textContent);
+const axis = report.timing.axis;
+const gapAfter = new Set(report.timing.gap_after_sample);
+const ns = "http://www.w3.org/2000/svg";
+const fmt = value => value === null || value === undefined ? "—" : Number(value).toLocaleString(undefined,{maximumFractionDigits:4});
+const node = (tag, text, cls) => { const e=document.createElement(tag); if(text!==undefined)e.textContent=text; if(cls)e.className=cls; return e; };
+const svgNode = (tag, attrs) => {const e=document.createElementNS(ns,tag);for(const [key,value] of Object.entries(attrs))e.setAttribute(key,String(value));return e;};
+const badge = sensor => node("span", (sensor.status==="review"?"! ":sensor.status==="no_findings"?"✓ ":"— ")+sensor.status_label,"badge "+sensor.status);
+const rangeText = (start,end) => `${fmt(start)}–${fmt(end)} ${report.timing.unit}`;
+const finiteValues = sensor => sensor.values.filter(value=>value!==null);
+function scaleFor(sensor){
+  let pool=finiteValues(sensor);
+  if(sensor.id.startsWith("brake_")){
+    const brakes=report.sensors.filter(item=>item.id.startsWith("brake_")&&item.logged);
+    if(brakes.length===2&&brakes.every(item=>item.unit===sensor.unit))pool=brakes.flatMap(finiteValues).concat(0);
+  }
+  if(!pool.length)return [0,1];
+  let low=Infinity,high=-Infinity;
+  for(const value of pool){low=Math.min(low,value);high=Math.max(high,value);}
+  if(low===high){const pad=sensor.id==="gear"?1:Math.max(Math.abs(low)*.02,.01);low-=pad;high+=pad;}
+  else{const pad=(high-low)*.07;low-=pad;high+=pad;}
+  return [low,high];
+}
+function plot(sensor, small, start=0, end=axis.length-1){
+  const width=small?250:1080,height=small?50:300;
+  const margin=small?{l:3,r:3,t:5,b:5}:{l:76,r:24,t:24,b:52};
+  const svg=svgNode("svg",{viewBox:`0 0 ${width} ${height}`,role:"img",class:small?"spark":"plot","aria-label":`${sensor.name}, ${small?"whole recording":"selected range"}. ${sensor.unit}.`});
+  svg.append(svgNode("title",{}));svg.firstChild.textContent=`${sensor.name}: ${rangeText(axis[start],axis[end])}`;
+  const [low,high]=scaleFor(sensor),xLow=axis[start]??0,xHigh=axis[end]??xLow;
+  const x=value=>margin.l+(value-xLow)/(xHigh-xLow||1)*(width-margin.l-margin.r);
+  const y=value=>margin.t+(high-value)/(high-low)*(height-margin.t-margin.b);
+  if(!small){
+    for(let index=0;index<=4;index++){
+      const value=low+(high-low)*index/4,cy=y(value);
+      svg.append(svgNode("line",{x1:margin.l,x2:width-margin.r,y1:cy,y2:cy,class:"grid"}));
+      const label=svgNode("text",{x:margin.l-10,y:cy+4,"text-anchor":"end","font-size":12});label.textContent=fmt(value);svg.append(label);
+      const tick=xLow+(xHigh-xLow)*index/4;
+      const time=svgNode("text",{x:x(tick),y:height-28,"text-anchor":"middle","font-size":12});time.textContent=fmt(tick);svg.append(time);
+    }
+    const xlabel=svgNode("text",{x:width/2,y:height-6,"text-anchor":"middle","font-size":12});
+    xlabel.textContent=report.timing.basis==="sample_index"?"Sample index (starting at 0)":`${report.timing.basis==="estimated"?"Estimated":"Recorded"} time (seconds)`;svg.append(xlabel);
+    const unit=svgNode("text",{x:margin.l,y:14,"font-size":12});unit.textContent=sensor.unit||"Unit unspecified";svg.append(unit);
+  }
+  let path="",active=false,previousY=0;
+  for(let index=start;index<=end;index++){
+    const value=sensor.values[index];
+    if(value===null||value===undefined){active=false;continue;}
+    const px=x(axis[index]).toFixed(2),py=y(value).toFixed(2);
+    if(gapAfter.has(index-1))active=false;
+    if(!active)path+=`M${px},${py}`;
+    else if(sensor.plot==="step")path+=`L${px},${previousY}L${px},${py}`;
+    else path+=`L${px},${py}`;
+    active=true;previousY=py;
+    // A one-sample segment needs a visible point; an M command alone draws nothing.
+    if((index===start||sensor.values[index-1]===null||gapAfter.has(index-1))&&
+       (index===end||sensor.values[index+1]===null||gapAfter.has(index))){
+      svg.append(svgNode("circle",{cx:px,cy:py,r:small?1.5:2.5,fill:"var(--blue)"}));
+    }
+  }
+  svg.append(svgNode("path",{d:path,class:"trace"}));
+  for(const finding of sensor.findings){
+    const index=finding.location.activation_sample;
+    if(index<start||index>end)continue;
+    const px=x(axis[index]),value=sensor.values[index],py=value===null?margin.t:y(value);
+    const marker=svgNode("path",{d:`M${px},${py-6}l-5,9h10Z`,class:"event"});
+    const title=svgNode("title",{});title.textContent=`${finding.id}: ${finding.title}`;marker.append(title);svg.append(marker);
+  }
+  return svg;
+}
+document.getElementById("source").textContent=`${report.source.path} · ${report.source.session||"Session unspecified"}`;
+document.getElementById("timing").textContent=`${report.source.measurement_rows.toLocaleString()} measurement rows · 8 sensor types / 9 channels · ${report.timing.basis.replace("_"," ")} · ${rangeText(axis[0],axis.at(-1))}`;
+document.getElementById("trend-heading").textContent=`Whole run · ${rangeText(axis[0],axis.at(-1))}`;
+for(const [key,label] of [["review","channels to review"],["not_assessed","not assessed"],["not_logged","not logged"]]){
+  const box=node("div");box.append(node("strong",report.summary.counts[key]),node("span",label));document.getElementById("summary").append(box);
+}
+for(const limitation of report.limitations)document.getElementById("limitations").append(node("li",limitation));
+const rows = new Map();
+let selectedId=null,selectedFinding=0,focusEvent=false;
+function button(label,action,pressed){const e=node("button",label);e.type="button";if(pressed!==undefined)e.setAttribute("aria-pressed",pressed);e.addEventListener("click",action);return e;}
+for(const sensor of report.sensors){
+  const row=node("tr");rows.set(sensor.id,row);
+  const name=node("td"),choose=button(sensor.name,()=>select(sensor.id));choose.className="sensor-button";
+  choose.append(node("small",`${sensor.group} · ${sensor.unit||"Unit unavailable"}`));name.append(choose);row.append(name);
+  const result=node("td");result.append(badge(sensor),node("small",sensor.assessment_scope,"scope"));row.append(result);
+  const trend=node("td");
+  if(sensor.logged&&sensor.data_summary.numeric_samples){
+    trend.append(plot(sensor,true));const limits=scaleFor(sensor);
+    trend.append(node("div",`Scale ${fmt(limits[0])}–${fmt(limits[1])} ${sensor.unit}`,"trend-note"));
+  }else trend.append(node("small",sensor.logged?"No numeric readings":"No channel data"));
+  row.append(trend);
+  const numeric=node("td",undefined,"numeric"),data=sensor.data_summary;
+  if(data)numeric.append(node("strong",`${fmt(100*data.numeric_fraction)}%`),node("small",`${data.numeric_samples.toLocaleString()}/${data.total_samples.toLocaleString()} samples`));
+  else numeric.textContent="—";row.append(numeric);
+  row.append(node("td",sensor.main_observation,"observation"));document.getElementById("sensor-rows").append(row);
+}
+function locationText(location){
+  const samples=`Samples ${location.start_sample}–${location.end_sample}`;
+  return location.start_seconds===null?samples:`${location.time_basis==="estimated"?"Estimated":"Recorded"} ${fmt(location.start_seconds)}–${fmt(location.end_seconds)} s · evidence span ${fmt(location.elapsed_span_seconds)} s`;
+}
+function select(id){
+  selectedId=id;selectedFinding=0;focusEvent=false;
+  for(const [key,row] of rows){row.classList.toggle("selected",key===id);row.querySelector("button").setAttribute("aria-pressed",key===id);}
+  showDetail();
+}
+function showDetail(){
+  const sensor=report.sensors.find(item=>item.id===selectedId),container=document.getElementById("inspector");container.replaceChildren();
+  const heading=node("div",undefined,"detail-heading");heading.append(node("h2",sensor.name),badge(sensor));container.append(heading);
+  if(!sensor.findings.length)container.append(node("p",sensor.main_observation));
+  if(!sensor.logged)return;
+  const data=sensor.data_summary;
+  if(!data.numeric_samples)container.append(node("div","No usable numeric readings to display.","empty"));
+  else{
+    let start=0,end=axis.length-1;
+    const finding=sensor.findings[selectedFinding];
+    if(finding&&finding.scope!=="whole_recording"){
+      const toolbar=node("div",undefined,"toolbar");
+      toolbar.append(button("Whole run",()=>{focusEvent=false;showDetail();},!focusEvent),button("Finding context",()=>{focusEvent=true;showDetail();},focusEvent));container.append(toolbar);
+    }
+    if(focusEvent&&finding&&finding.scope!=="whole_recording"){
+      const location=finding.location,pad=Math.max(20,(location.end_sample-location.start_sample)*2);
+      start=Math.max(0,location.start_sample-pad);end=Math.min(axis.length-1,location.end_sample+pad);
+    }
+    container.append(plot(sensor,false,start,end));
+    if(report.timing.basis==="estimated")container.append(node("small","Estimated time assumes evenly spaced samples."));
+  }
+  if(sensor.findings.length){
+    if(sensor.findings.length>1){
+      const events=node("div",undefined,"events"),label=node("label",`Finding (${sensor.findings.length})`),picker=node("select");
+      sensor.findings.forEach((finding,index)=>{const option=node("option",`${finding.id}: ${finding.title}`);option.value=String(index);picker.append(option);});
+      picker.value=String(selectedFinding);picker.addEventListener("change",()=>{selectedFinding=Number(picker.value);focusEvent=true;showDetail();});label.append(picker);events.append(label);container.append(events);
+    }
+    const finding=sensor.findings[selectedFinding],explanation=node("div",undefined,"explanation");
+    explanation.append(node("h3",`${finding.id} · ${finding.title}`),node("p",finding.message),node("small",locationText(finding.location)),node("p",`Next: ${finding.suggested_action}`));
+    container.append(explanation);
+  }
+  const extra=node("details",undefined,"detail-extra");extra.append(node("summary","Statistics and check details"));
+  extra.append(node("small",`CSV channel: ${sensor.channel} · ${sensor.unit||"Unit unavailable"}`),node("small",report.timing.note));
+  if(sensor.findings.length){
+    const finding=sensor.findings[selectedFinding],location=finding.location;
+    extra.append(node("p",`${finding.id}: samples ${location.start_sample}–${location.end_sample}; raised at sample ${location.activation_sample}.`,"muted"));
+    extra.append(node("small","Evidence span means last timestamp minus first timestamp; it is not a confirmed fault duration."));
+  }
+  const facts=node("div",undefined,"facts");
+  for(const [label,value] of [["Minimum",data.minimum],["Median",data.median],["Maximum",data.maximum],["Missing readings",data.missing_samples],["Invalid readings",data.invalid_samples]]){
+    const fact=node("span",fmt(value));fact.prepend(node("small",label));facts.append(fact);
+  }
+  extra.append(facts,node("small","Statistics describe recorded values. They are not approved limits; numeric availability does not measure sensor health."));
+  const grid=node("div",undefined,"detail-grid"),checks=node("div"),limits=node("div");checks.append(node("h3","Checks and assessment"));
+  if(!sensor.checks.length)checks.append(node("p","Sensor-specific detection rules have not been implemented. A visible trace alone does not establish correct operation.","muted"));
+  for(const check of sensor.checks){const item=node("div",undefined,"check");item.append(node("strong",check.name),node("small",`${check.outcome.replaceAll("_"," ")} · ${check.assessment}`),node("small",check.message));checks.append(item);}
+  if(sensor.analysis){
+    const summary=sensor.analysis.data_summary;
+    checks.append(node("p",`Reverse = −1 · Neutral = 0 · Fractional observations: ${summary.fractional_samples}. Brief readings remain in the plot; they are not findings by themselves.`,"muted"));
+    const context=sensor.analysis.check_details.whole_run_no_shift;
+    if(context.message)checks.append(node("p",context.message,"muted"));
+    if(sensor.notes&&sensor.notes.length){
+      const notes=node("details"),list=node("ul");notes.append(node("summary",`Transition notes (${sensor.notes.length})`));
+      for(const note of sensor.notes)list.append(node("li",`${note.title} · ${locationText(note.location)}. ${note.message}`));
+      notes.append(list);checks.append(notes);
+    }
+  }
+  limits.append(node("h3","Limitations"));const list=node("ul");for(const message of sensor.limitations)list.append(node("li",message));limits.append(list);grid.append(checks,limits);extra.append(grid);
+  if(sensor.analysis){const settings=node("details"),pre=node("pre",JSON.stringify(sensor.analysis.analysis_settings,null,2));pre.style.whiteSpace="pre-wrap";settings.append(node("summary","Gear rule settings"),pre);extra.append(settings);}
+  container.append(extra);
+}
+select((report.sensors.find(sensor=>sensor.status==="review")||report.sensors.find(sensor=>sensor.logged)||report.sensors[0]).id);
+</script>
+</body>
+</html>
