@@ -287,65 +287,91 @@ class HomePage:
 
 
     def first_file_selection(self):
-
-        if sys.platform == "darwin":
-            self.select_file_dpg(start_project=True)
-            return
-
         self.select_file_tk()
-        self.new_project()
 
         
     def new_project(self):
-        dpg.delete_item("Landing Page", children_only=True)
-                
+        if dpg.does_item_exist("Landing Page"):
+            dpg.delete_item("Landing Page", children_only=True)
+        if dpg.does_item_exist("navbar"):
+            dpg.delete_item("navbar")
+        for tag in self.SWAPPABLE_WINDOWS:
+            if dpg.does_item_exist(tag):
+                dpg.delete_item(tag)
         self.show_home()
 
     def select_file_tk(self):
         """
-        Select a file using native operating system UI.
+        Select a project CSV; use Dear PyGui's picker on macOS.
         """
 
         # Tk's native macOS dialog cannot run in Dear PyGui's callback thread.
         if sys.platform == "darwin":
-            self.select_file_dpg(start_project=not hasattr(self, "views"))
-            return
+            return self.select_file_dpg()
         
         root = tk.Tk()
-        root.withdraw()
-        self.file_path = filedialog.askopenfilename()
-        root.destroy() # DO NOT DELETE EVER
-        
-        # This runs load() + validations and returns the DataFrame
-        # TODO: this makes two copies of df? If so investigate making this not a hard copy.
-        self.df = self.importer.import_and_validate(self.file_path)
-        
-        #self.show_dataframe()
+        try:
+            root.withdraw()
+            path = filedialog.askopenfilename()
+        finally:
+            root.destroy()
+        return self._load_project_file(path)
 
-    def select_file_dpg(self, start_project=False):
+    def select_file_dpg(self):
         """Use the existing GUI toolkit for CSV selection on macOS."""
         dialog_tag = "csv_import_dialog"
         if dpg.does_item_exist(dialog_tag):
             dpg.delete_item(dialog_tag)
 
         def load_selected_file(sender, app_data):
-            path = app_data.get("file_path_name")
-            if not path:
-                return
-            self.df = self.importer.import_and_validate(path)
-            self.file_path = path
-            if start_project:
-                self.new_project()
+            self._close_file_dialog(sender)
+            self._load_project_file(app_data.get("file_path_name"))
 
         samples = Path(__file__).resolve().parents[1] / "_debugging_files" / "USE_THESE"
+        default = Path(self.importer.path).parent if self.importer.path else samples
+        if not default.is_dir():
+            default = Path.home()
         with dpg.file_dialog(
             label="Load CSV recording", tag=dialog_tag,
-            directory_selector=False, modal=True, width=800, height=500,
-            default_path=str(samples), callback=load_selected_file,
+            directory_selector=False, file_count=1, modal=True, width=800, height=500,
+            default_path=str(default), callback=load_selected_file,
+            cancel_callback=self._close_file_dialog,
         ):
             dpg.add_file_extension(".csv")
             dpg.add_file_extension(".*")
 
+    @staticmethod
+    def _close_file_dialog(sender, app_data=None, user_data=None):
+        if sender is not None and dpg.does_item_exist(sender):
+            dpg.hide_item(sender)
+
+    def _load_project_file(self, path):
+        """Commit a successful import, then rebuild views with the new manager."""
+        if not path:
+            return False
+        candidate = DataManager()
+        try:
+            frame = candidate.import_and_validate(str(Path(path).expanduser()))
+        except (OSError, UnicodeError, ValueError, KeyError, TypeError, StopIteration) as error:
+            self._show_import_error(str(error) or type(error).__name__, has_recording=self.df is not None)
+            return False
+        if dpg.does_item_exist("project_load_error"):
+            dpg.delete_item("project_load_error")
+        self.importer = candidate
+        self.df = frame
+        self.file_path = candidate.path
+        self.new_project()
+        return True
+
+    @staticmethod
+    def _show_import_error(message, has_recording=False):
+        if dpg.does_item_exist("project_load_error"):
+            dpg.delete_item("project_load_error")
+        with dpg.window(label="Could not load recording", tag="project_load_error",
+                        modal=True, width=560, autosize=True, no_collapse=True):
+            dpg.add_text(message, wrap=520)
+            dpg.add_text("The previous recording has been kept." if has_recording else "Choose another CSV to try again.", wrap=520)
+            dpg.add_button(label="OK", callback=lambda: dpg.delete_item("project_load_error"))
 
         
     def show_dataframe(self):
@@ -378,6 +404,7 @@ class HomePage:
         self._build_nav_tree()
         
         self.views = {}
+        self.view_errors = {}
         
         with dpg.window(
             label="Navigation", tag="navbar",
@@ -405,9 +432,17 @@ class HomePage:
                 show=is_first,
             ):
                 if node.identifier in VIEW_MAP:
-                    view = VIEW_MAP[node.identifier](self.importer)
-                    view.build(node.identifier)       # parent_tag = window tag
-                    self.views[node.identifier] = view
+                    try:
+                        view = VIEW_MAP[node.identifier](self.importer)
+                        view.build(node.identifier)       # parent_tag = window tag
+                    except (KeyError, ValueError, IndexError, ZeroDivisionError, TypeError) as error:
+                        dpg.delete_item(node.identifier, children_only=True)
+                        detail = f"Missing channel: {error}" if isinstance(error, KeyError) else f"{type(error).__name__}: {error}"
+                        self.view_errors[node.identifier] = detail
+                        dpg.add_text(f"{node.tag} is unavailable for this recording.", parent=node.identifier, wrap=540)
+                        dpg.add_text(detail, parent=node.identifier, wrap=540)
+                    else:
+                        self.views[node.identifier] = view
                 else:
                     # Parent node with no dedicated view — just a placeholder
                     dpg.add_text(f"{node.tag}: select a sub-view from the sidebar.")

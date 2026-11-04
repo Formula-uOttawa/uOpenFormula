@@ -7,10 +7,10 @@ in `ui/views/elec_monitor.py` handles controls and presentation.
 ## Review a recording
 
 1. Run `python main.py` from the repository directory in the project environment.
-2. Either load a compatible project recording from the landing page, or choose
-   **New Project** to open the navigation without importing data.
-3. Open **Electrical → Monitor**. **Use project recording** reads the CSV selected
-   by the application; **Open CSV** reviews a recording in this page only.
+2. Choose **Load Project** on the landing page and select a CSV recording.
+3. Open **Electrical → Monitor**. It automatically follows the selected project
+   recording; no second file selection is required. To change recordings, use
+   **File → Load Project**. All views are rebuilt with the newly loaded data.
 4. Select a sensor in the table and scroll to its detailed trace and findings.
    Missing channels are **Not logged**; logged channels without detection rules
    are **Not assessed**. **No findings** applies only to completed checks.
@@ -27,7 +27,14 @@ trace without rounding fractional readings. Finding markers indicate activation.
 **Reanalyze** rereads the selected source CSV. Project-file changes are picked up
 when the Monitor page is opened again. A CSV opened within the monitor stays
 selected until **Use project recording** is chosen; it does not replace the
-data used by other analysis pages.
+data used by other analysis pages. Loading a new project resets all views,
+including Monitor, to follow the new recording.
+
+For a standalone review, choose **New Project → Electrical → Monitor → Open CSV**.
+The global loader retains its existing CSV validation; this monitor-only route
+can also review recordings that the global numeric conversion rejects. When
+Monitor is using a loaded project recording, it hides the redundant Open CSV
+and Use project recording controls.
 
 ## Timing and gear settings
 
@@ -101,6 +108,15 @@ rules/HTML template in PyInstaller builds. The existing executable build uses
 this hook and runs the tests before packaging. Windows builds must still be
 verified on Windows; a local Mac build does not establish Windows compatibility.
 
-The separate Mac file-picker fix is outside this feature branch. On a Mac using
-this branch alone, the **New Project → Electrical → Monitor → Open CSV** path
-uses Dear PyGui's picker and avoids the original global Tk file picker.
+The branch includes the Mac file-picker fix. Both main loading buttons use
+Dear PyGui on macOS, avoiding the native Tk crash from a background callback.
+Other platforms retain their existing native picker. Cancelling leaves the
+current project intact; a failed import displays an error and preserves the
+previous recording. A view that cannot compute its analysis shows an unavailable
+message without preventing other views from opening.
+
+Eight additional loading regression tests bring the suite to 149 tests. They
+cover both main Mac entry points avoiding Tk, cancellation, automatic Monitor
+population, missing oil channels, repeat loads, and failure recovery. Real-log
+smoke checks also load 15.csv and the team's faran_a_3731.csv through the shared
+project-loading path.

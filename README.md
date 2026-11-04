@@ -114,9 +114,15 @@ The page provides a sensor table, whole-run traces, a selected-channel plot,
 gear findings and evidence, timing options, and optional HTML/JSON export.
 Only gear checks are implemented; other logged channels are marked **Not assessed**.
 
-Use the project recording, or choose **Open CSV** within the monitor. To review a
-sensor recording without loading unrelated analyses, choose **New Project** on
-the landing page and then **Electrical → Monitor → Open CSV**.
+Choose a CSV using the normal **Load Project** button, then open **Electrical →
+Monitor**. The monitor automatically uses that recording. **File → Load Project**
+replaces the recording and refreshes the analysis pages. Pages with missing or
+incompatible input data show an unavailable message instead of blocking the
+other analyses. On macOS the main loader uses Dear PyGui's file picker.
+
+For an independent review, **New Project → Electrical → Monitor → Open CSV**
+remains available. The extra file-selection controls are hidden when Monitor
+is following a loaded project recording.
 
 See [Sensor Monitor usage and architecture](docs/sensor-monitor.md) for the
 analysis scope, module structure, and validation commands.

@@ -147,12 +147,17 @@ class MonitorView:
         with dpg.group(parent=self.CONTENT):
             dpg.add_text("Sensor Monitor", color=(140, 197, 242))
             dpg.add_text("Offline recording review | 8 sensor types / 9 channels")
+            has_project = bool(self.manager.path and self.manager.df is not None)
             with dpg.group(horizontal=True):
-                dpg.add_button(label="Open CSV", callback=self._open_csv)
-                dpg.add_button(label="Use project recording", callback=self._use_project)
+                if not has_project or self.source_path is not None:
+                    dpg.add_button(label="Open CSV", callback=self._open_csv)
+                if has_project and self.source_path is not None:
+                    dpg.add_button(label="Use project recording", callback=self._use_project)
                 dpg.add_button(label="Reanalyze", callback=self._reanalyze)
                 dpg.add_button(label="Export HTML + JSON", callback=self._export,
                                enabled=self.report is not None)
+            if has_project and self.source_path is None:
+                dpg.add_text("Using the project recording. Change it with File > Load Project.", wrap=self._wrap_width())
             with dpg.group(horizontal=True):
                 dpg.add_combo(["Unknown", "Yes", "No"], label="Shifts expected",
                               default_value={None: "Unknown", True: "Yes", False: "No"}[self.shifts_expected],
