@@ -7,6 +7,8 @@ from treelib import Tree
 import pkgutil
 import ui.views as views_package
 import importlib
+import sys
+from pathlib import Path
 
 def _load_view_map():
     """Auto-discover all view classes from ui/views/.
@@ -286,6 +288,10 @@ class HomePage:
 
     def first_file_selection(self):
 
+        if sys.platform == "darwin":
+            self.select_file_dpg(start_project=True)
+            return
+
         self.select_file_tk()
         self.new_project()
 
@@ -299,6 +305,11 @@ class HomePage:
         """
         Select a file using native operating system UI.
         """
+
+        # Tk's native macOS dialog cannot run in Dear PyGui's callback thread.
+        if sys.platform == "darwin":
+            self.select_file_dpg(start_project=not hasattr(self, "views"))
+            return
         
         root = tk.Tk()
         root.withdraw()
@@ -310,6 +321,30 @@ class HomePage:
         self.df = self.importer.import_and_validate(self.file_path)
         
         #self.show_dataframe()
+
+    def select_file_dpg(self, start_project=False):
+        """Use the existing GUI toolkit for CSV selection on macOS."""
+        dialog_tag = "csv_import_dialog"
+        if dpg.does_item_exist(dialog_tag):
+            dpg.delete_item(dialog_tag)
+
+        def load_selected_file(sender, app_data):
+            path = app_data.get("file_path_name")
+            if not path:
+                return
+            self.df = self.importer.import_and_validate(path)
+            self.file_path = path
+            if start_project:
+                self.new_project()
+
+        samples = Path(__file__).resolve().parents[1] / "_debugging_files" / "USE_THESE"
+        with dpg.file_dialog(
+            label="Load CSV recording", tag=dialog_tag,
+            directory_selector=False, modal=True, width=800, height=500,
+            default_path=str(samples), callback=load_selected_file,
+        ):
+            dpg.add_file_extension(".csv")
+            dpg.add_file_extension(".*")
 
 
         
