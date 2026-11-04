@@ -30,7 +30,6 @@ VIEW_MAP = _load_view_map()
 
 class HomePage:
     """Stores the logic of the home and landing page gui. TODO do this docstring"""
-    SIDEBAR_WIDTH = 200
     
     file_path = ""
     df = None
@@ -70,9 +69,7 @@ class HomePage:
         
         # Create and populate main viewport
         dpg.create_viewport(title='uOpenFormula',
-                            width=1280, height=800,
-                            min_width=960, min_height=640, resizable=True)
-        dpg.set_viewport_resize_callback(self._resize_layout)
+                            width=800, height=600)
         
         self.init_menu_bar()
         self.show_landing()
@@ -82,7 +79,6 @@ class HomePage:
         dpg.setup_dearpygui()
         dpg.set_viewport_pos([0, 0])
         dpg.show_viewport(maximized=True)  # prevents window sizing and positioning from failing on initial creation
-        self._resize_layout()
         dpg.start_dearpygui()
         dpg.destroy_context()
     
@@ -193,33 +189,6 @@ class HomePage:
         for win in self.SWAPPABLE_WINDOWS:
             if dpg.does_item_exist(win):
                 dpg.configure_item(win, show=(win == view_key))
-
-    @staticmethod
-    def _viewport_geometry():
-        width = dpg.get_viewport_client_width() or dpg.get_viewport_width()
-        height = dpg.get_viewport_client_height() or dpg.get_viewport_height()
-        # Viewport menu bars do not expose rect_size on every platform/version.
-        menu_state = dpg.get_item_state("Main Menu Bar") if dpg.does_item_exist("Main Menu Bar") else {}
-        menu_height = menu_state.get("rect_size", (0, 20))[1]
-        return int(width), int(height), max(20, int(menu_height))
-
-    def _resize_layout(self, sender=None, app_data=None, user_data=None):
-        """Keep navigation and all analysis panes inside the viewport's work area."""
-        width, height, menu_height = self._viewport_geometry()
-        if width <= self.SIDEBAR_WIDTH or height <= menu_height:
-            return
-        body_width, body_height = width - self.SIDEBAR_WIDTH, height - menu_height
-        if dpg.does_item_exist("navbar"):
-            dpg.configure_item("navbar", pos=(0, menu_height),
-                               width=self.SIDEBAR_WIDTH, height=body_height)
-        for tag in self.SWAPPABLE_WINDOWS:
-            if dpg.does_item_exist(tag):
-                dpg.configure_item(tag, pos=(self.SIDEBAR_WIDTH, menu_height),
-                                   width=body_width, height=body_height)
-        for view in getattr(self, "views", {}).values():
-            resize = getattr(view, "resize", None)
-            if callable(resize):
-                resize(body_width, body_height)
 
     def _refresh_sidebar(self):
         """Wipe and redraw sidebar contents for the current nav stack top."""
@@ -433,15 +402,14 @@ class HomePage:
     
     def show_home(self):
         self._build_nav_tree()
-        width, height, menu_height = self._viewport_geometry()
         
         self.views = {}
         self.view_errors = {}
         
         with dpg.window(
             label="Navigation", tag="navbar",
-            pos=[0, menu_height], width=self.SIDEBAR_WIDTH,
-            height=height - menu_height,
+            pos=[0, 0], width=200,
+            height=dpg.get_viewport_height(),
             no_close=True, no_move=True, no_collapse=True, no_resize=True
         ):
             self._build_sidebar_for("home")
@@ -456,9 +424,9 @@ class HomePage:
             with dpg.window(
                 label=node.tag,
                 tag=node.identifier,
-                pos=[self.SIDEBAR_WIDTH, menu_height],
-                width=width - self.SIDEBAR_WIDTH,
-                height=height - menu_height,
+                pos=[200, 0],
+                width=dpg.get_viewport_width() - 200,
+                height=dpg.get_viewport_height(),
                 no_close=True, no_move=True,
                 no_resize=True, no_collapse=True,
                 show=is_first,
@@ -478,4 +446,3 @@ class HomePage:
                 else:
                     # Parent node with no dedicated view — just a placeholder
                     dpg.add_text(f"{node.tag}: select a sub-view from the sidebar.")
-        self._resize_layout()

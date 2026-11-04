@@ -4,23 +4,24 @@ The **Electrical → Monitor** node now opens a Dear PyGui view of the existing
 sensor-monitor report. Analysis rules remain in `core/sensor_monitor`; the view
 in `ui/views/elec_monitor.py` handles controls and presentation.
 
-## Window layout
+## Monitor layout
 
-The application starts at 1280 × 800 with a resizable outer window. Drag its
-edges or maximize it to use more screen space. The navigation and analysis
-panes follow the viewport's usable area below the menu bar. The sidebar stays
-200 pixels wide while the content receives the remaining width.
+The Monitor fits the existing application's 800 × 600 starting window. It does
+not change the viewport settings, navigation layout, Raw Data, or oil plots.
+Its content is organized into three tabs:
 
-Monitor text wraps and chart/table dimensions adapt to the available area.
-Whole-run mini plots fill their table cells, and the selected plot grows with
-the window. Resizing changes widget geometry without rerunning analysis,
-replacing plot axes, or clearing the selected sensor/finding. Raw Data and the
-existing oil plots also fill their parent panels. The outer window has a
-minimum size of 960 × 640 to keep the controls usable.
+- **Overview:** a scrollable two-column list with whole-run mini plots and
+  assessments. Select a sensor's name to open its details.
+- **Sensor detail:** a sensor selector, full-width chart, findings, and
+  expandable evidence/statistics. Scroll inside this tab to read longer results.
+- **Options:** recording information, reanalysis, timing/gear context settings,
+  optional report export, and report limitations.
 
-Four resize regression checks bring the test suite to 153 tests, covering pane
-geometry, compact and large layouts, preservation of results/plot objects, and
-the existing Raw Data and Oil Starvation displays.
+Only Monitor widgets adapt to the size of their own panel. Text wraps and
+mini plots fill their cells; resizing preserves the current report and plot
+objects. The chart's time-axis label distinguishes recorded, estimated, and
+sample-index timing. Other sensors remain accessible without returning to the
+overview through the selector at the top of Sensor detail.
 
 ## Review a recording
 
@@ -29,7 +30,8 @@ the existing Raw Data and Oil Starvation displays.
 3. Open **Electrical → Monitor**. It automatically follows the selected project
    recording; no second file selection is required. To change recordings, use
    **File → Load Project**. All views are rebuilt with the newly loaded data.
-4. Select a sensor in the table and scroll to its detailed trace and findings.
+4. Select a sensor in **Overview** to open **Sensor detail**, or use the sensor
+   selector at the top of that tab to change sensors.
    Missing channels are **Not logged**; logged channels without detection rules
    are **Not assessed**. **No findings** applies only to completed checks.
 5. Use the finding selector and **Finding context** to inspect localized results.
@@ -57,7 +59,7 @@ and Use project recording controls.
 ## Timing and gear settings
 
 - Recorded, complete, strictly increasing timestamps use the recorded time axis.
-- **Estimate time when all timestamps are blank** is off by default. Estimation
+- In **Options**, **Estimate time for all-blank timestamps** is off by default. Estimation
   requires consistent sample-rate and duration metadata. The report and plots
   explicitly label estimated timing and its uniform-sampling assumption.
 - Partial, nonnumeric, duplicate, or reversed timestamps use sample indices;
@@ -133,8 +135,12 @@ current project intact; a failed import displays an error and preserves the
 previous recording. A view that cannot compute its analysis shows an unavailable
 message without preventing other views from opening.
 
-Eight additional loading regression tests bring the suite to 149 tests. They
-cover both main Mac entry points avoiding Tk, cancellation, automatic Monitor
-population, missing oil channels, repeat loads, and failure recovery. Real-log
-smoke checks also load 15.csv and the team's faran_a_3731.csv through the shared
-project-loading path.
+Eight additional loading regression tests cover both main Mac entry points
+avoiding Tk, cancellation, automatic Monitor population, missing oil channels,
+repeat loads, and failure recovery. Real-log smoke checks also load 15.csv and
+the team's faran_a_3731.csv through the shared project-loading path.
+
+Four monitor layout checks bring the suite to 153 tests. They cover the original
+viewport dimensions, compact overview, navigation to sensor details, preservation
+of the selected tab during reanalysis, and panel-local sizing without changing
+the surrounding application or replacing plot objects.

@@ -17,7 +17,11 @@ class MonitorView:
     CONTENT = "sensor_monitor_content"
     DETAIL = "sensor_monitor_detail"
     TABLE = "sensor_monitor_table"
-    COLUMN_WEIGHTS = (1.3, 1, 1.5, .85, 2.3)
+    TABS = "sensor_monitor_tabs"
+    OVERVIEW_TAB = "sensor_monitor_overview_tab"
+    DETAIL_TAB = "sensor_monitor_detail_tab"
+    OPTIONS_TAB = "sensor_monitor_options_tab"
+    COLUMN_WEIGHTS = (1, 1.4)
 
     def __init__(self, DataManager):
         self.manager = DataManager
@@ -34,10 +38,19 @@ class MonitorView:
         self._built = False
         self._content_size = None
         self._wrapped_text = {}
+        self._active_tab = self.OVERVIEW_TAB
 
     def build(self, parent_tag):
-        with dpg.child_window(tag=self.CONTENT, parent=parent_tag, border=False, width=-1, height=-1):
+        with dpg.child_window(tag=self.CONTENT, parent=parent_tag, border=False,
+                              width=-1, height=-1, no_scrollbar=True):
             pass
+        # Observe only our panel; leave the application's viewport/layout alone.
+        handlers = f"{self.CONTENT}_handlers"
+        if dpg.does_item_exist(handlers):
+            dpg.delete_item(handlers)
+        with dpg.item_handler_registry(tag=handlers):
+            dpg.add_item_resize_handler(callback=self._resize_content)
+        dpg.bind_item_handler_registry(self.CONTENT, handlers)
         self._built = True
         self.refresh()
 
@@ -81,6 +94,7 @@ class MonitorView:
 
     def _use_project(self, sender=None, app_data=None, user_data=None):
         self.source_path = None
+        self._active_tab = self.OVERVIEW_TAB
         self._project_token = (self.manager.path, id(self.manager.df))
         if not self.manager.path or self.manager.df is None:
             self.report = None
@@ -108,6 +122,7 @@ class MonitorView:
         path = app_data.get("file_path_name")
         if path:
             self.source_path = path
+            self._active_tab = self.OVERVIEW_TAB
             self._analyze()
 
     def _export(self, sender=None, app_data=None, user_data=None):
@@ -145,16 +160,13 @@ class MonitorView:
         return max(1, width - 200), max(1, height - 20)
 
     def _wrap_width(self):
-        return max(240, self._body_size()[0] - 48)
+        return max(200, self._body_size()[0] - 48)
 
     def _column_width(self, column):
         return max(55, int(self._wrap_width() * self.COLUMN_WEIGHTS[column] / sum(self.COLUMN_WEIGHTS)) - 16)
 
-    def _table_height(self):
-        return max(230, min(420, int(self._body_size()[1] * .38)))
-
     def _plot_height(self):
-        return max(260, min(480, int(self._body_size()[1] * .48)))
+        return max(170, min(340, int(self._body_size()[1] * .36)))
 
     def _text(self, text, *, column=None, **kwargs):
         if column is not None:
@@ -163,6 +175,11 @@ class MonitorView:
         if column is not None or kwargs.get("wrap") == self._wrap_width():
             self._wrapped_text[item] = column
         return item
+
+    def _resize_content(self, sender=None, app_data=None, user_data=None):
+        width, height = dpg.get_item_rect_size(self.CONTENT)
+        if width > 0 and height > 0:
+            self.resize(width, height)
 
     def resize(self, width, height):
         """Resize existing widgets without rerunning analysis or resetting plots."""
@@ -174,12 +191,18 @@ class MonitorView:
                 dpg.configure_item(item, wrap=self._wrap_width() if column is None else self._column_width(column))
             else:
                 del self._wrapped_text[item]
-        if dpg.does_item_exist(self.TABLE):
-            dpg.set_item_height(self.TABLE, self._table_height())
         if dpg.does_item_exist("sensor_monitor_selected_plot"):
             dpg.set_item_height("sensor_monitor_selected_plot", self._plot_height())
         if dpg.does_item_exist("sensor_monitor_finding_selector"):
             dpg.set_item_width("sensor_monitor_finding_selector", max(200, self._wrap_width() - 80))
+        if dpg.does_item_exist("sensor_monitor_sensor_selector"):
+            dpg.set_item_width("sensor_monitor_sensor_selector", max(180, self._wrap_width() - 65))
+
+    def _tab_changed(self, sender, app_data, user_data=None):
+        for tag in (self.OVERVIEW_TAB, self.DETAIL_TAB, self.OPTIONS_TAB):
+            if app_data in (tag, dpg.get_alias_id(tag)):
+                self._active_tab = tag
+                return
 
     @staticmethod
     def _number(value):
@@ -190,76 +213,88 @@ class MonitorView:
         self._wrapped_text.clear()
         with dpg.group(parent=self.CONTENT):
             self._text("Sensor Monitor", color=(140, 197, 242))
-            self._text("Offline recording review | 8 sensor types / 9 channels")
-            has_project = bool(self.manager.path and self.manager.df is not None)
-            with dpg.group(horizontal=True):
-                if not has_project or self.source_path is not None:
-                    dpg.add_button(label="Open CSV", callback=self._open_csv)
-                if has_project and self.source_path is not None:
-                    dpg.add_button(label="Use project recording", callback=self._use_project)
-                dpg.add_button(label="Reanalyze", callback=self._reanalyze)
-                dpg.add_button(label="Export HTML + JSON", callback=self._export,
-                               enabled=self.report is not None)
-            if has_project and self.source_path is None:
-                self._text("Using the project recording. Change it with File > Load Project.", wrap=self._wrap_width())
-            with dpg.group(horizontal=True):
-                dpg.add_combo(["Unknown", "Yes", "No"], label="Shifts expected",
-                              default_value={None: "Unknown", True: "Yes", False: "No"}[self.shifts_expected],
-                              width=110, callback=self._set_shifts)
-                dpg.add_checkbox(label="Estimate time when all timestamps are blank",
-                                 default_value=self.allow_estimated, callback=self._set_timing)
-            self._text("Estimation requires matching sample-rate/duration metadata and assumes uniform sampling.",
-                         color=(167, 179, 194), wrap=self._wrap_width())
+            if self.report is not None:
+                source = self.report["source"]
+                self._text(f"{Path(source['path']).name} | {source['measurement_rows']:,} samples",
+                           wrap=self._wrap_width())
             if self.error:
                 self._text(self.error, color=(255, 160, 140), wrap=self._wrap_width())
-            self._text(self.export_message, tag="sensor_monitor_export_message", wrap=self._wrap_width())
-            if self.report is None:
-                dpg.add_separator()
-                self._text("Open a CSV here or use a loaded project recording to see sensor results.", wrap=self._wrap_width())
-                return
-            report = self.report
-            self._text(f"Source: {report['source']['path']}", wrap=self._wrap_width())
-            timing = report["timing"]
-            axis = timing["axis"]
-            self._text(f"{report['source']['measurement_rows']:,} rows | {timing['basis'].replace('_', ' ')} | "
-                         f"{self._number(axis[0])} - {self._number(axis[-1])} {timing['unit']}")
-            self._text(timing["note"], color=(245, 192, 92) if timing["basis"] != "recorded" else (167, 179, 194), wrap=self._wrap_width())
-            counts = report["summary"]["counts"]
-            self._text(f"Review: {counts['review']}   No findings: {counts['no_findings']}   "
-                         f"Not assessed: {counts['not_assessed']}   Not logged: {counts['not_logged']}")
-            self._text("Only gear checks are implemented. Numeric availability describes data, not sensor health.", wrap=self._wrap_width())
-            dpg.add_separator()
-            self._text("Run overview | Select a sensor to inspect its trace and assessment")
-            with dpg.table(tag=self.TABLE, header_row=True, height=self._table_height(), scrollY=True,
-                           scrollX=True, freeze_rows=1, resizable=True, row_background=True,
-                           policy=dpg.mvTable_SizingStretchProp, borders_innerH=True):
-                for label, weight in zip(["Sensor", "Result", "Whole-run trend", "Numeric data", "Main observation"], self.COLUMN_WEIGHTS):
-                    dpg.add_table_column(label=label, init_width_or_weight=weight)
-                for sensor in report["sensors"]:
-                    with dpg.table_row():
-                        with dpg.table_cell():
-                            dpg.add_selectable(label=sensor["name"], user_data=sensor["id"],
-                                               callback=self._select_sensor)
-                            self._text(f"{sensor['channel']} | {sensor['unit'] or 'Unit unavailable'}", column=0)
-                        with dpg.table_cell():
-                            self._text(sensor["status_label"], color=self.COLORS[sensor["status"]])
-                            self._text(sensor["assessment_scope"], column=1)
-                        with dpg.table_cell():
-                            self._plot(sensor, f"sensor_monitor_mini_{sensor['id']}", miniature=True)
-                            if sensor["logged"] and sensor["data_summary"]["numeric_samples"]:
-                                low, high = value_limits(report, sensor)
-                                self._text(f"{self._number(low)} - {self._number(high)} {sensor['unit']}", column=2)
-                        with dpg.table_cell():
-                            summary = sensor["data_summary"]
-                            self._text(f"{summary['numeric_fraction']:.1%}" if summary else "Unavailable")
-                            if summary:
-                                self._text(f"{summary['numeric_samples']:,}/{summary['total_samples']:,}")
-                        with dpg.table_cell():
-                            self._text(sensor["main_observation"], column=4)
-            with dpg.group(tag=self.DETAIL):
-                pass
+            with dpg.tab_bar(tag=self.TABS, callback=self._tab_changed):
+                with dpg.tab(label="Overview", tag=self.OVERVIEW_TAB):
+                    self._render_overview()
+                with dpg.tab(label="Sensor detail", tag=self.DETAIL_TAB):
+                    with dpg.child_window(tag=self.DETAIL, border=False, width=-1, height=-1):
+                        pass
+                with dpg.tab(label="Options", tag=self.OPTIONS_TAB):
+                    with dpg.child_window(border=False, width=-1, height=-1):
+                        self._render_options()
+            dpg.set_value(self.TABS, dpg.get_alias_id(self._active_tab))
+        if self.report is not None:
             self._highlight_selected()
             self._render_detail()
+        else:
+            with dpg.group(parent=self.DETAIL):
+                self._text("Load a recording to inspect a sensor.", wrap=self._wrap_width())
+
+    def _render_overview(self):
+        if self.report is None:
+            self._text("Load a project recording, or choose Open CSV in Options.", wrap=self._wrap_width())
+            return
+        counts = self.report["summary"]["counts"]
+        self._text(f"{counts['review']} review | {counts['no_findings']} no findings | "
+                   f"{counts['not_assessed']} not assessed | {counts['not_logged']} not logged",
+                   wrap=self._wrap_width())
+        self._text("Only gear has checks. Select a sensor for details.", wrap=self._wrap_width())
+        with dpg.table(tag=self.TABLE, header_row=True, width=-1, height=-1,
+                       scrollY=True, freeze_rows=1, row_background=True,
+                       policy=dpg.mvTable_SizingStretchProp, borders_innerH=True):
+            for label, weight in zip(["Sensor / whole-run trend", "Assessment"], self.COLUMN_WEIGHTS):
+                dpg.add_table_column(label=label, init_width_or_weight=weight)
+            for sensor in self.report["sensors"]:
+                with dpg.table_row():
+                    with dpg.table_cell():
+                        dpg.add_selectable(label=sensor["name"], user_data=sensor["id"],
+                                           callback=self._select_sensor)
+                        self._plot(sensor, f"sensor_monitor_mini_{sensor['id']}", miniature=True)
+                        if sensor["logged"] and sensor["data_summary"]["numeric_samples"]:
+                            low, high = value_limits(self.report, sensor)
+                            self._text(f"{self._number(low)} - {self._number(high)} {sensor['unit']}", column=0)
+                    with dpg.table_cell():
+                        self._text(sensor["status_label"], color=self.COLORS[sensor["status"]])
+                        self._text(sensor["main_observation"], column=1)
+
+    def _render_options(self):
+        has_project = bool(self.manager.path and self.manager.df is not None)
+        self._text("Recording", color=(140, 197, 242))
+        if has_project and self.source_path is None:
+            self._text("Using the project recording. Change it with File > Load Project.", wrap=self._wrap_width())
+        if self.report is not None:
+            self._text(self.report["source"]["path"], wrap=self._wrap_width())
+        with dpg.group(horizontal=True):
+            if not has_project or self.source_path is not None:
+                dpg.add_button(label="Open CSV", callback=self._open_csv)
+            if has_project and self.source_path is not None:
+                dpg.add_button(label="Use project recording", callback=self._use_project)
+            dpg.add_button(label="Reanalyze", callback=self._reanalyze)
+        dpg.add_separator()
+        self._text("Analysis options", color=(140, 197, 242))
+        dpg.add_combo(["Unknown", "Yes", "No"], label="Shifts expected",
+                      default_value={None: "Unknown", True: "Yes", False: "No"}[self.shifts_expected],
+                      width=110, callback=self._set_shifts)
+        dpg.add_checkbox(label="Estimate time for all-blank timestamps",
+                         default_value=self.allow_estimated, callback=self._set_timing)
+        self._text("Estimation requires matching sample-rate/duration metadata and assumes uniform sampling.",
+                   color=(167, 179, 194), wrap=self._wrap_width())
+        if self.report is not None:
+            self._text(self.report["timing"]["note"], wrap=self._wrap_width())
+        dpg.add_separator()
+        self._text("Report export", color=(140, 197, 242))
+        dpg.add_button(label="Export HTML + JSON", callback=self._export, enabled=self.report is not None)
+        self._text(self.export_message, tag="sensor_monitor_export_message", wrap=self._wrap_width())
+        if self.report is not None:
+            with dpg.collapsing_header(label="Report scope and limitations"):
+                for limitation in self.report["limitations"]:
+                    self._text(limitation, bullet=True, wrap=self._wrap_width())
 
     def _highlight_selected(self):
         for index, sensor in enumerate(self.report["sensors"]):
@@ -273,6 +308,13 @@ class MonitorView:
         self.focus_finding = False
         self._highlight_selected()
         self._render_detail()
+        dpg.set_y_scroll(self.DETAIL, 0)
+        self._active_tab = self.DETAIL_TAB
+        dpg.set_value(self.TABS, dpg.get_alias_id(self.DETAIL_TAB))
+
+    def _sensor_changed(self, sender, app_data, user_data=None):
+        sensor = next(item for item in self.report["sensors"] if item["name"] == app_data)
+        self._select_sensor(sender, app_data, sensor["id"])
 
     def _select_finding(self, sender, app_data, user_data=None):
         self.finding_index = self._finding_labels.index(app_data)
@@ -326,12 +368,21 @@ class MonitorView:
         self._wrapped_text = {item: column for item, column in self._wrapped_text.items() if dpg.does_item_exist(item)}
         sensor = next(item for item in self.report["sensors"] if item["id"] == self.selected_id)
         with dpg.group(parent=self.DETAIL):
-            dpg.add_separator()
-            self._text(sensor["name"], color=(140, 197, 242))
-            self._text(f"{sensor['status_label']} | {sensor['assessment_scope']}", color=self.COLORS[sensor["status"]])
+            dpg.add_combo([item["name"] for item in self.report["sensors"]],
+                          tag="sensor_monitor_sensor_selector", label="Sensor",
+                          default_value=sensor["name"], width=max(180, self._wrap_width() - 65),
+                          callback=self._sensor_changed)
+            self._text(f"{sensor['status_label']} | {sensor['assessment_scope']}",
+                       color=self.COLORS[sensor["status"]], wrap=self._wrap_width())
             self._text(sensor["main_observation"], wrap=self._wrap_width())
             if not sensor["logged"]:
                 return
+            self._text(f"{sensor['channel']} | {sensor['unit'] or 'Unit unavailable'}",
+                       color=(167, 179, 194), wrap=self._wrap_width())
+            timing = self.report["timing"]
+            self._text(f"{timing['basis'].replace('_', ' ').title()} axis | "
+                       f"{self._number(timing['axis'][0])} - {self._number(timing['axis'][-1])} {timing['unit']}",
+                       wrap=self._wrap_width())
             findings = sensor["findings"]
             self._finding_labels = [f"{item['id']}: {item['title']}" for item in findings]
             if len(findings) > 1:
@@ -350,7 +401,7 @@ class MonitorView:
                 self._text(self._location_text(item["location"]), wrap=self._wrap_width())
                 self._text(f"Next: {item['suggested_action']}", wrap=self._wrap_width())
                 with dpg.collapsing_header(label="Finding evidence"):
-                    self._text(f"Rule {item['rule_version']} ({item['rule_status']}) | {item['category']}")
+                    self._text(f"Rule {item['rule_version']} ({item['rule_status']}) | {item['category']}", wrap=self._wrap_width())
                     with dpg.table(header_row=True, resizable=True, policy=dpg.mvTable_SizingStretchProp):
                         for label in ["Sample", "Time (s)", "Raw gear reading"]:
                             dpg.add_table_column(label=label)
@@ -361,15 +412,15 @@ class MonitorView:
                                 self._text(str(sample["raw_gear"]))
             with dpg.collapsing_header(label="Statistics and check details"):
                 data = sensor["data_summary"]
-                self._text(f"CSV channel: {sensor['channel']} | {sensor['unit']}")
-                self._text(f"Minimum: {self._number(data['minimum'])} | Median: {self._number(data['median'])} | Maximum: {self._number(data['maximum'])}")
-                self._text(f"Missing: {data['missing_samples']:,} | Invalid: {data['invalid_samples']:,} | Numeric: {data['numeric_samples']:,}/{data['total_samples']:,}")
+                self._text(f"CSV channel: {sensor['channel']} | {sensor['unit']}", wrap=self._wrap_width())
+                self._text(f"Minimum: {self._number(data['minimum'])} | Median: {self._number(data['median'])} | Maximum: {self._number(data['maximum'])}", wrap=self._wrap_width())
+                self._text(f"Missing: {data['missing_samples']:,} | Invalid: {data['invalid_samples']:,} | Numeric: {data['numeric_samples']:,}/{data['total_samples']:,}", wrap=self._wrap_width())
                 self._text(self.report["timing"]["note"], wrap=self._wrap_width())
                 if sensor["analysis"]:
                     analysis = sensor["analysis"]
                     rules = analysis["analysis_settings"]["rules"]
-                    self._text(f"Gear rule version: {rules['version']} ({rules['status']})")
-                    self._text("Confirmed gears: " + (", ".join(gear_label(code) for code in analysis["data_summary"]["confirmed_gears"]) or "None"))
+                    self._text(f"Gear rule version: {rules['version']} ({rules['status']})", wrap=self._wrap_width())
+                    self._text("Confirmed gears: " + (", ".join(gear_label(code) for code in analysis["data_summary"]["confirmed_gears"]) or "None"), wrap=self._wrap_width())
                     for check in sensor["checks"]:
                         dpg.add_separator()
                         self._text(f"{check['name']} | {check['assessment']} | {check['outcome']}", wrap=self._wrap_width())
@@ -380,9 +431,6 @@ class MonitorView:
                         self._text(note["message"], wrap=self._wrap_width())
                         self._text(self._location_text(note["location"]), wrap=self._wrap_width())
                 for limitation in sensor["limitations"]:
-                    self._text(limitation, bullet=True, wrap=self._wrap_width())
-            with dpg.collapsing_header(label="Report scope and limitations"):
-                for limitation in self.report["limitations"]:
                     self._text(limitation, bullet=True, wrap=self._wrap_width())
 
     def _location_text(self, location):

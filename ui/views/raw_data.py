@@ -23,14 +23,14 @@ class RawDataView:
         if dpg.does_item_exist("show_data"):
                     dpg.delete_item("show_data")
         
-        with dpg.child_window(tag="show_data", label="Raw Data", width=-1, height=-1):
+        with dpg.child_window(tag="show_data", label="Raw Data",):
             data_array = self.df.to_numpy()
             with dpg.table(header_row=True,
                 policy=dpg.mvTable_SizingFixedFit,
                 resizable=True,
                 scrollX=True, scrollY=True,
                 borders_innerH=True, borders_outerH=True,
-                borders_innerV=True, borders_outerV=True, width=-1, height=-1):
+                borders_innerV=True, borders_outerV=True,height = dpg.get_viewport_height() - 100):
                 for col in self.df.columns:
                     dpg.add_table_column(label=str(col))
                             

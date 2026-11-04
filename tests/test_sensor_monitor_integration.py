@@ -127,8 +127,10 @@ class SensorMonitorViewTests(unittest.TestCase):
             self.view._close_dialog('sensor_monitor_csv_picker')
             self.assertFalse(dpg.get_item_configuration('sensor_monitor_csv_picker')['show'])
             self.view._open_csv()
+            self.view._active_tab = self.view.OPTIONS_TAB
             self.view._csv_selected('sensor_monitor_csv_picker', {'file_path_name': str(self.path)})
             self.assertFalse(dpg.get_item_configuration('sensor_monitor_csv_picker')['show'])
+            self.assertEqual(dpg.get_value(self.view.TABS), self.view.OVERVIEW_TAB)
         self.assertEqual(len(self.view.report['sensors']), 9)
         self.assertEqual(self.manager.path, '')
         self.assertIsNone(self.manager.df)
