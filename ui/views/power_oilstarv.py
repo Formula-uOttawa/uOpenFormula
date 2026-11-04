@@ -280,7 +280,7 @@ class OilStarvationView:
                 
         
         with dpg.child_window(tag="Rpm & Oil Pressure graph", show=False):
-            with dpg.plot(label="Rpm & Oil Pressure", height=800, width=dpg.get_viewport_width() - 250, crosshairs=True):
+            with dpg.plot(label="Rpm & Oil Pressure", height=-1, width=-1, crosshairs=True):
                     
                 dpg.add_plot_legend()
         
@@ -296,7 +296,7 @@ class OilStarvationView:
                 
         with dpg.child_window(tag="G-forces & Oil Pressure graph", show=False):
                             
-            with dpg.plot(label="G-forces & Oil Pressure", height=800, width=dpg.get_viewport_width() - 250, crosshairs=True):
+            with dpg.plot(label="G-forces & Oil Pressure", height=-1, width=-1, crosshairs=True):
                             
                 dpg.add_plot_legend()
                 
@@ -308,7 +308,7 @@ class OilStarvationView:
                 dpg.add_line_series(x=self.time, y=self.lat_g_scaled, label="lateral G (Left/Right) X 10", parent="y_axis_Gforce_and_oil")
         
         with dpg.child_window(tag="G-forces & Low Oil Pressure plot", show=False):
-            with dpg.plot(label="G-forces & Low Oil Pressure Events", height=800, width=dpg.get_viewport_width() - 250, crosshairs=True):
+            with dpg.plot(label="G-forces & Low Oil Pressure Events", height=-1, width=-1, crosshairs=True):
                             
                 dpg.add_plot_legend()
                 
@@ -339,7 +339,7 @@ class OilStarvationView:
                    
         
         with dpg.child_window(tag="Rpm vs Oil Pressure plot", show=False):
-            with dpg.plot(label="Rpm vs Oil Pressure", height=800, width=dpg.get_viewport_width() - 250, crosshairs=True):
+            with dpg.plot(label="Rpm vs Oil Pressure", height=-1, width=-1, crosshairs=True):
                             
                 dpg.add_plot_legend()
                 
@@ -364,7 +364,7 @@ class OilStarvationView:
 
                 
         with dpg.child_window(tag="Oil Starvation distrobution Graph", show=False):
-            with dpg.plot(label="Oil Starvation Distrobution", height=800, width=dpg.get_viewport_width() - 250, crosshairs=True):
+            with dpg.plot(label="Oil Starvation Distrobution", height=-1, width=-1, crosshairs=True):
                             
                 dpg.add_plot_legend()
                 

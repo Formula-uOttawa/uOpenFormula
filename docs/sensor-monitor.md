@@ -4,6 +4,24 @@ The **Electrical → Monitor** node now opens a Dear PyGui view of the existing
 sensor-monitor report. Analysis rules remain in `core/sensor_monitor`; the view
 in `ui/views/elec_monitor.py` handles controls and presentation.
 
+## Window layout
+
+The application starts at 1280 × 800 with a resizable outer window. Drag its
+edges or maximize it to use more screen space. The navigation and analysis
+panes follow the viewport's usable area below the menu bar. The sidebar stays
+200 pixels wide while the content receives the remaining width.
+
+Monitor text wraps and chart/table dimensions adapt to the available area.
+Whole-run mini plots fill their table cells, and the selected plot grows with
+the window. Resizing changes widget geometry without rerunning analysis,
+replacing plot axes, or clearing the selected sensor/finding. Raw Data and the
+existing oil plots also fill their parent panels. The outer window has a
+minimum size of 960 × 640 to keep the controls usable.
+
+Four resize regression checks bring the test suite to 153 tests, covering pane
+geometry, compact and large layouts, preservation of results/plot objects, and
+the existing Raw Data and Oil Starvation displays.
+
 ## Review a recording
 
 1. Run `python main.py` from the repository directory in the project environment.
