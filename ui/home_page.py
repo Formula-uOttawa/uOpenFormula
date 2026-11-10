@@ -8,6 +8,7 @@ import pkgutil
 import ui.views as views_package
 import importlib
 
+
 def _load_view_map():
     """Auto-discover all view classes from ui/views/.
     
@@ -36,19 +37,9 @@ class HomePage:
     SWAPPABLE_WINDOWS = []  # populated dynamically from tree
     
     def __init__(self):
-        self.show_home_page()
+        pass
     
-    def show_home_page(self):
-        """Initializes the homepage and loads all necessary elements."""
-        
-        dpg.create_context()
-        
-        # Set theme for button rounding.
-        with dpg.theme() as global_theme:
-            with dpg.theme_component(dpg.mvButton):
-                dpg.add_theme_style(dpg.mvStyleVar_FrameRounding, 10.0)
-        dpg.bind_theme(global_theme)
-        
+    def nav_themes(self):
         # Active nav button highlighted
         with dpg.theme() as self.theme_nav_active:
             with dpg.theme_component(dpg.mvButton):
@@ -56,50 +47,16 @@ class HomePage:
                 dpg.add_theme_color(dpg.mvThemeCol_ButtonHovered, (90, 145, 175, 255))
                 dpg.add_theme_color(dpg.mvThemeCol_ButtonActive,  (70, 115, 145, 255))
                 dpg.add_theme_style(dpg.mvStyleVar_FrameRounding, 10.0)
-
-        # Inactive nav button default
+            
+                        # Inactive nav button default
         with dpg.theme() as self.theme_nav_inactive:
             with dpg.theme_component(dpg.mvButton):
                 dpg.add_theme_color(dpg.mvThemeCol_Button,        (50, 50, 50, 255))
                 dpg.add_theme_color(dpg.mvThemeCol_ButtonHovered, (70, 70, 70, 255))
                 dpg.add_theme_color(dpg.mvThemeCol_ButtonActive,  (90, 90, 90, 255))
                 dpg.add_theme_style(dpg.mvStyleVar_FrameRounding, 10.0)
-        
-        # Create and populate main viewport
-        dpg.create_viewport(title='uOpenFormula',
-                            width=800, height=600)
-        
-        self.init_menu_bar()
-        self.show_landing()
-        
-        dpg.set_primary_window("Landing Page", True)
-        dpg.set_viewport_large_icon("assets/Formula_uottawa.ico")
-        dpg.setup_dearpygui()
-        dpg.set_viewport_pos([0, 0])
-        dpg.show_viewport(maximized=True)  # prevents window sizing and positioning from failing on initial creation
-        dpg.start_dearpygui()
-        dpg.destroy_context()
     
-    def init_menu_bar(self):
-        # Add and populate menu bar at the top.
-        with dpg.viewport_menu_bar(tag="Main Menu Bar"):  # TODO: revisions to menu bar
-            with dpg.menu(label="File"):
-                dpg.add_menu_item(label="Save Project", callback=lambda: None)
-                dpg.add_menu_item(label="Load Project", callback=lambda: self.select_file_tk())
-                
-            with dpg.menu(label="Graph"):
-                dpg.add_menu_item(label="Make New Graph", callback=lambda: self.make_graph_window(400, 150, 450, 770))
-            
-            with dpg.menu(label="Filter"):
-                dpg.add_menu_item(label="Low-pass", callback=lambda: None)
-                dpg.add_menu_item(label="High-pass", callback=lambda: None)
-                dpg.add_menu_item(label="Band-pass", callback=lambda: None)
-            
-            with dpg.menu(label="Trim"):
-                pass
-            
-            with dpg.menu(label="Correlation"):
-                dpg.add_menu_item(label="Linear", callback=lambda: None)
+    
     
     def _build_nav_tree(self):
         self.nav = Tree()
@@ -276,10 +233,10 @@ class HomePage:
                         dpg.add_spacer(width=63)
 
                 with dpg.table_row():
-                    dpg.add_spacer(height=97)
+                    dpg.add_spacer(height=(dpg.get_viewport_height()-493))
 
                 with dpg.table_row():
-                    dpg.add_text(default_value="Version: Pre-alpha", color=[255, 255, 255, 120])
+                    dpg.add_text(default_value="Version: Alpha", color=[255, 255, 255, 200])
 
 
     def first_file_selection(self):
@@ -297,7 +254,8 @@ class HomePage:
         """
         Select a file using native operating system UI.
         """
-        
+
+        #TODO: move this to the new data manager view
         root = tk.Tk()
         root.withdraw()
         self.file_path = filedialog.askopenfilename()
@@ -307,7 +265,6 @@ class HomePage:
         # TODO: this makes two copies of df? If so investigate making this not a hard copy.
         self.df = self.importer.import_and_validate(self.file_path)
         
-        #self.show_dataframe()
 
 
         

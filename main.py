@@ -1,8 +1,8 @@
-from ui.home_page import HomePage
+from ui.runtime import Runtime
 
 if __name__ == "__main__":
     pass
 else:
     quit()
 
-home_page = HomePage()
+app = Runtime()
