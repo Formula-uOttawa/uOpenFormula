@@ -12,7 +12,8 @@ class DataManager:
         Tuple: List containing x data, followed by list containing y data.
     """
 
-    def __init__(self, update_brake_temps, show_brake_temps):
+
+    def __init__(self, update_brake_temps, play_brake_temps, set_brake_temp_step):
         self.path = ""              # Path to the CSV file
         self.df = None              # DataFrame to hold the loaded data
         self.df_excl_time = None    # DataFrame excluding 'Time' column
@@ -20,10 +21,17 @@ class DataManager:
         self.channels = {}          # Channel items with their units
         self.header_index = None    # Index of the header row
         self.update_brake_temps = update_brake_temps
-        self.show_brake_temps = show_brake_temps
+        self.play_brake_temps = play_brake_temps
+        self.set_brake_temp_step = set_brake_temp_step
+
 
     def set_brake_temps(self, temps):
         self.brake_temps = temps
+
+
+    def set_brake_temp_step(self, step):
+        self.set_brake_temp_step(step)
+
     
     def import_and_validate(self, path):
         """Global method to import and validate the MoTeC CSV file."""

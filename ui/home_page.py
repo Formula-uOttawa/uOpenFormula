@@ -216,14 +216,16 @@ class HomePage:
                         with dpg.group():
                             with dpg.group(horizontal=True):
                                 dpg.add_spacer(width=80)
-                                dpg.add_text("New Project")
+                                dpg.add_text("Load Project")
 
-                            dpg.add_image_button(load_texture("assets/plus.png"),
+                            dpg.add_image_button(load_texture("assets/file_icon.png"),
                                                  background_color=(0,0,0,70),
                                                  frame_padding=0,
                                                  width=250,
                                                  height=250,
-                                                 callback=lambda:self.new_project())
+                                                 callback=lambda: self.load_project()
+                                                )
+                            
 
                         dpg.add_spacer(width=60)
 
@@ -231,13 +233,16 @@ class HomePage:
 
                             with dpg.group(horizontal=True):
                                 dpg.add_spacer(width=82)
-                                dpg.add_text("Load Project")
-                            dpg.add_image_button(load_texture("assets/file_icon.png"),
+                                dpg.add_text("New Project")
+
+                            dpg.add_image_button(load_texture("assets/plus.png"),
                                                  background_color=(0,0,0,70),
                                                  frame_padding=0,
                                                  width=250,
                                                  height=250,
-                                                 callback=lambda: self.first_file_selection())
+                                                 callback=lambda:self.new_project()
+                                                )
+                            
                         dpg.add_spacer(width=63)
 
                 with dpg.table_row():
@@ -247,16 +252,24 @@ class HomePage:
                     dpg.add_text(default_value="Version: Alpha", color=[255, 255, 255, 200])
 
 
-    def first_file_selection(self):
-
-        self.select_file_tk()
-        self.new_project()
+    def new_project(self):
+        # meant for future use
+        
+        self.load_project()
 
         
-    def new_project(self):
-        dpg.delete_item("Landing Page", children_only=True)
+    def load_project(self):
+        # meant for future use
+        self.load_file()
+
+        if dpg.does_item_exist("Landing Page"):
+            dpg.delete_item("Landing Page", children_only=True)
                 
         self.show_home()
+
+
+    def load_file(self):
+        self.select_file_tk()
 
 
     def select_file_tk(self):

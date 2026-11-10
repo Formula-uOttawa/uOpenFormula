@@ -5,8 +5,9 @@ from ui.home_page import HomePage
 
 class Runtime:
 
+
     def __init__(self):
-        self.importer = DataManager(self.update_break_temp, self.show_brake_temps)
+        self.importer = DataManager(self.update_break_temp, self.play_brake_temps, self.set_brake_temp_step)
         self.home_page = HomePage(self.importer)
         self.render_manager = rm()
         self.boot()
@@ -29,6 +30,7 @@ class Runtime:
                 dpg.create_viewport(title='uOpenFormula',
                                     width=800, height=600)
                 
+                
                 self.init_menu_bar()
                 self.home_page.show_landing()
                 
@@ -43,30 +45,29 @@ class Runtime:
 
     def init_menu_bar(self):
             # Add and populate menu bar at the top.
-            with dpg.viewport_menu_bar(tag="Main Menu Bar"):  # TODO: revisions to menu bar
+            with dpg.viewport_menu_bar(tag="Main Menu Bar"):  
                 with dpg.menu(label="File"):
                     dpg.add_menu_item(label="Save Project", callback=lambda: None)
-                    dpg.add_menu_item(label="Load Project", callback=lambda: self.select_file_tk())
-                    
-                with dpg.menu(label="Graph"):
-                    dpg.add_menu_item(label="Make New Graph", callback=lambda: self.make_graph_window(400, 150, 450, 770))
+                    dpg.add_menu_item(label="Load Project", callback=lambda: self.home_page.load_file())
+
                 
-                with dpg.menu(label="Filter"):
-                    dpg.add_menu_item(label="Low-pass", callback=lambda: None)
-                    dpg.add_menu_item(label="High-pass", callback=lambda: None)
-                    dpg.add_menu_item(label="Band-pass", callback=lambda: None)
-                
-                with dpg.menu(label="Trim"):
-                    pass
-                
-                with dpg.menu(label="Correlation"):
-                    dpg.add_menu_item(label="Linear", callback=lambda: dpg.show_metrics())
+                with dpg.menu(label="Debugging Tools"):
+                    dpg.add_menu_item(label="Metrics", callback=lambda: dpg.show_metrics())
+                    dpg.add_menu_item(label="Debugging Menu", callback=lambda: dpg.show_debug())
+                    dpg.add_menu_item(label="Item  Registry", callback=lambda: dpg.show_item_registry())
+
+                dpg.add_menu_item(label="Help", callback=lambda: None)
+
 
     def update_break_temp(self, temps):
         self.render_manager.brake_temps = temps
 
 
-    def show_brake_temps(self, flag):
-        self.render_manager.show_brake_temps = flag
+    def play_brake_temps(self, flag):
+        self.render_manager.play_brake_temps = flag
 
-    
+
+    def set_brake_temp_step(self, playrate):
+
+        self.render_manager.update_interval = (1/(20 * playrate))
+

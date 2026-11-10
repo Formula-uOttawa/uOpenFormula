@@ -69,8 +69,16 @@ class BrakeTempView:
                             format="%.1f",
                             tag="heatmap"
                         )
+            with dpg.group(horizontal = True):
 
-            dpg.add_button(label="Start", callback=lambda: self.dm.show_brake_temps(True))
-                
-            
-            
+                dpg.add_button(label="Play", callback=lambda: self.dm.play_brake_temps(True))
+                dpg.add_button(label="Pause", callback=lambda: self.dm.play_brake_temps(False))
+                dpg.add_input_float(tag = "Play rate menu", 
+                                    label="play rate", 
+                                    width = 200,
+                                    step = 0.25, 
+                                    default_value = 1, 
+                                    min_value= 0.25, min_clamped = True, 
+                                    max_value = 3, max_clamped = True,
+                                    callback = lambda: self.dm.set_brake_temp_step(dpg.get_value("Play rate menu"))
+                                    )

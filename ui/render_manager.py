@@ -6,27 +6,36 @@ import time
 class RenderManager():
 
     def __init__(self):
-        self.show_brake_temps=False
-        self.brake_temps=[]
-
+        self.play_brake_temps = False
+        self.brake_temps = []
+        self.index = 1
+        self.step = 1
+        self.update_interval = 1 / 20 
 
     def start(self):
 
         last_update = time.perf_counter()
-        update_interval = 1 / 20  # 20 FPS
-        i = 1
+        
+        
         while dpg.is_dearpygui_running():
 
-            if self.show_brake_temps:
-                current_time = time.perf_counter()
-                 
-                if current_time - last_update >= update_interval:
+            #TODO: change the susp_brake to brake temp heatmap once other graphs are done
+            if self.play_brake_temps:
 
-                    temps = self.brake_temps[i]
-                    # Update the heatmap
+                if dpg.is_item_shown("susp_brake") == False:
+                    self.play_brake_temps = False
+                    
+                current_time = time.perf_counter()
+                    
+                if current_time - last_update >= self.update_interval:
+                        
+                    temps = self.brake_temps[self.index]
+                        
                     dpg.set_value("heatmap", value = [temps])
-                    i = (i+1)%len(self.brake_temps)
+                    self.index = (self.index + 1)%len(self.brake_temps)
                     last_update = current_time
+
+
 
             dpg.render_dearpygui_frame()
 
