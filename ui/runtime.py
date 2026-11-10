@@ -1,12 +1,16 @@
-import ui.render_manager as rm
 import dearpygui.dearpygui as dpg
+from ui.render_manager import RenderManager as rm
+from core.data_manager import DataManager
 from ui.home_page import HomePage
 
 class Runtime:
 
     def __init__(self):
-        self.home_page = HomePage()
+        self.importer = DataManager(self.update_break_temp, self.show_brake_temps)
+        self.home_page = HomePage(self.importer)
+        self.render_manager = rm()
         self.boot()
+
 
     def boot(self):
                 """Initializes the homepage and loads all necessary elements."""
@@ -33,7 +37,7 @@ class Runtime:
                 dpg.setup_dearpygui()
                 dpg.set_viewport_pos([0, 0])
                 dpg.show_viewport(maximized=True)  # prevents window sizing and positioning from failing on initial creation
-                rm.start()
+                self.render_manager.start()
                 dpg.destroy_context()
 
 
@@ -56,6 +60,13 @@ class Runtime:
                     pass
                 
                 with dpg.menu(label="Correlation"):
-                    dpg.add_menu_item(label="Linear", callback=lambda: None)
+                    dpg.add_menu_item(label="Linear", callback=lambda: dpg.show_metrics())
+
+    def update_break_temp(self, temps):
+        self.render_manager.brake_temps = temps
+
+
+    def show_brake_temps(self, flag):
+        self.render_manager.show_brake_temps = flag
 
     

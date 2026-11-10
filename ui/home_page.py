@@ -32,12 +32,14 @@ class HomePage:
     
     file_path = ""
     df = None
-    importer = DataManager()
+    
     
     SWAPPABLE_WINDOWS = []  # populated dynamically from tree
+
     
-    def __init__(self):
-        pass
+    def __init__(self, importer):
+        self.importer = importer
+
     
     def nav_themes(self):
         # Active nav button highlighted
@@ -57,12 +59,9 @@ class HomePage:
                 dpg.add_theme_style(dpg.mvStyleVar_FrameRounding, 10.0)
     
     
-    
     def _build_nav_tree(self):
         self.nav = Tree()
         self.nav.create_node("Home", "home")
-
-        self.nav.create_node("Raw Data", "raw_data", parent="home")
 
         self.nav.create_node("Aerodynamics", "aero", parent="home")
         self.nav.create_node("Coastdown", "aero_coastdown", parent="aero")
@@ -85,9 +84,11 @@ class HomePage:
         self.nav.create_node("Torsion test", "frame_torsion", parent="frame")
         
         self.nav.create_node("Suspension", "susp", parent="home")
+        self.nav.create_node("Brake Temps", "susp_brake", parent="susp")
         self.nav.create_node("Frequency analysis", "susp_freq", parent="susp")
         self.nav.create_node("Slip angle", "susp_slip", parent="susp")
-        
+
+        self.nav.create_node("Raw Data", "raw_data", parent="home")
         
 
         # How we track the current state of the navbar. List gets appended with
@@ -100,6 +101,7 @@ class HomePage:
             for node in self.nav.all_nodes()
             if node.identifier != "home"
         ]
+
         
     def push_nav(self, view_key):
         """Drill into a child view, or select a leaf without redrawing sidebar."""
@@ -115,12 +117,14 @@ class HomePage:
             self._refresh_sidebar()
             self._switch_main_view(view_key)
 
+
     def pop_nav(self):
         """Go up one level."""
         if len(self.nav_stack) > 1:
             self.nav_stack.pop()
             self._refresh_sidebar()
             self._switch_main_view(self.nav_stack[-1])
+
     
     def _update_highlights(self, active_key):
         """Highlight the active button among its siblings in the current sidebar."""
@@ -136,6 +140,7 @@ class HomePage:
                     else self.theme_nav_inactive
                 )
                 dpg.bind_item_theme(btn_tag, theme)
+
     
     def _switch_main_view(self, view_key):
         """Show only the window matching view_key, hide all others."""
@@ -143,10 +148,12 @@ class HomePage:
             if dpg.does_item_exist(win):
                 dpg.configure_item(win, show=(win == view_key))
 
+
     def _refresh_sidebar(self):
         """Wipe and redraw sidebar contents for the current nav stack top."""
         dpg.delete_item("navbar", children_only=True)
         self._build_sidebar_for(self.nav_stack[-1])
+
     
     def _build_sidebar_for(self, view_key):
         node = self.nav.get_node(view_key)
@@ -173,6 +180,7 @@ class HomePage:
                 width=-1,
                 parent="navbar",
             )
+
     
     def show_landing(self):
         # Create the main window.
@@ -250,6 +258,7 @@ class HomePage:
                 
         self.show_home()
 
+
     def select_file_tk(self):
         """
         Select a file using native operating system UI.
@@ -264,34 +273,6 @@ class HomePage:
         # This runs load() + validations and returns the DataFrame
         # TODO: this makes two copies of df? If so investigate making this not a hard copy.
         self.df = self.importer.import_and_validate(self.file_path)
-        
-
-
-        
-    def show_dataframe(self):
-        #TODO make docstrings
-
-        if dpg.does_item_exist("show_data"):
-            dpg.delete_item("show_data")
-
-        with dpg.window(tag="show_data", label="Raw Data",width=800,height=500,no_close=True):
-            data_array = self.df.to_numpy()
-            with dpg.table(header_row=True,
-                           policy=dpg.mvTable_SizingFixedFit,
-                           resizable=True,
-                           scrollX=True, scrollY=True,
-                           borders_innerH=True, borders_outerH=True,
-                           borders_innerV=True, borders_outerV=True):
-                for col in self.df.columns:
-                    dpg.add_table_column(label=str(col))
-                    
-                # Add Rows and Cells
-                for i in range(self.df.shape[0]):
-                    with dpg.table_row():
-                        for j in range(self.df.shape[1]):
-                            # Each cell is of type selectable, can also be text or input_text
-                            dpg.add_selectable(label=str(data_array[i, j]),
-                                               callback=lambda:None)
 
     
     def show_home(self):
