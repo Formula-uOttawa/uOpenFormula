@@ -184,6 +184,11 @@ class HomePage:
     
     def show_landing(self):
         # Create the main window.
+
+        viewport_width = dpg.get_viewport_width()
+        viewport_height = dpg.get_viewport_height()
+        vertical_padding = (viewport_height-300)/2
+
         with dpg.window(tag="Landing Page", no_move=True, no_resize=True, pos=(0, 0)):
             
             # This table houses the logo, new project, and load project buttons at the start of the program.
@@ -198,8 +203,9 @@ class HomePage:
                 dpg.add_table_column(width_fixed=True, init_width_or_weight=0.0)
                 dpg.add_table_column(width_stretch=True, init_width_or_weight=1.0)
                 
+                
                 with dpg.table_row():
-                    dpg.add_spacer(height=150)
+                    dpg.add_spacer(height=vertical_padding)
                 
                 with dpg.table_row():
                     dpg.add_spacer()
@@ -219,7 +225,8 @@ class HomePage:
                                 dpg.add_text("Load Project")
 
                             dpg.add_image_button(load_texture("assets/file_icon.png"),
-                                                 background_color=(0,0,0,70),
+                                                 tag="load_project_button",
+                                                 background_color=(0,0,0,0),
                                                  frame_padding=0,
                                                  width=250,
                                                  height=250,
@@ -236,7 +243,8 @@ class HomePage:
                                 dpg.add_text("New Project")
 
                             dpg.add_image_button(load_texture("assets/plus.png"),
-                                                 background_color=(0,0,0,70),
+                                                 tag="new_project_button",
+                                                 background_color=(0,0,0,0),
                                                  frame_padding=0,
                                                  width=250,
                                                  height=250,
@@ -246,7 +254,7 @@ class HomePage:
                         dpg.add_spacer(width=63)
 
                 with dpg.table_row():
-                    dpg.add_spacer(height=(dpg.get_viewport_height()-493))
+                    dpg.add_spacer(height=(dpg.get_viewport_height()-510))
 
                 with dpg.table_row():
                     dpg.add_text(default_value="Version: Alpha", color=[255, 255, 255, 200])
@@ -295,11 +303,14 @@ class HomePage:
         
         with dpg.window(
             label="Navigation", tag="navbar",
-            pos=[0, 0], width=200,
-            height=dpg.get_viewport_height(),
+            pos=[0, 27], width=200,
+            height=(dpg.get_viewport_height()-67),
             no_close=True, no_move=True, no_collapse=True, no_resize=True
         ):
             self._build_sidebar_for("home")
+
+
+        dpg.bind_item_theme("navbar", "cyan_border_theme")
 
         # Create all view windows (hidden by default except first)
         for node in self.nav.all_nodes():
@@ -311,13 +322,14 @@ class HomePage:
             with dpg.window(
                 label=node.tag,
                 tag=node.identifier,
-                pos=[200, 0],
-                width=dpg.get_viewport_width() - 200,
-                height=dpg.get_viewport_height(),
+                pos=[201, 27],
+                width=dpg.get_viewport_width() - 219,
+                height=dpg.get_viewport_height() - 67,
                 no_close=True, no_move=True,
                 no_resize=True, no_collapse=True,
                 show=is_first,
             ):
+                dpg.bind_item_theme(node.identifier, "cyan_border_theme")
                 if node.identifier in VIEW_MAP:
                     view = VIEW_MAP[node.identifier](self.importer)
                     view.build(node.identifier)       # parent_tag = window tag
@@ -325,3 +337,5 @@ class HomePage:
                 else:
                     # Parent node with no dedicated view — just a placeholder
                     dpg.add_text(f"{node.tag}: select a sub-view from the sidebar.")
+
+        

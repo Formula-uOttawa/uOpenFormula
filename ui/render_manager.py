@@ -34,8 +34,11 @@ class RenderManager():
                     temps = self.brake_temps[self.index]
 
                     texture = self.generate_brake_texture(temps)
-                    
+
+                    text = "\n".join([f"Band {i+1:02d}: {temps[i]:6.1f} °C" for i in range(16)])
+
                     dpg.set_value("disc_texture", texture)
+                    dpg.set_value("temp_text", text)
                     self.index = (self.index + 1)%len(self.brake_temps)
                     last_update = current_time
 

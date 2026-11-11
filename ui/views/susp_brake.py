@@ -11,6 +11,7 @@ class BrakeTempView:
         self.inner_radius = 22.5
         self.outer_radius = 70
         self.bands = 16
+        self.setup_disc_geometry() # assigns pixels to bands for heatmap
 
     
     def build(self, parent_tag):
@@ -36,6 +37,7 @@ class BrakeTempView:
         if dpg.does_item_exist("break_temp_placeholder"):
             dpg.delete_item("break_temp_placeholder")
 
+        # generates a list containing lists of all 16 bands for each time stamp
         temps = []
         time = self.df["Time"].tolist()
         for i in range (len(time)):
@@ -56,7 +58,8 @@ class BrakeTempView:
                           float(self.df["RR IR T15"][i]), 
                           float(self.df["RR IR T16"][i])
                           ])
-            
+
+        # generates the texture for the heatmap  
         with dpg.texture_registry(show=False):
                             dpg.add_dynamic_texture(
                                 width=self.size,
@@ -65,17 +68,21 @@ class BrakeTempView:
                                 tag="disc_texture"
                             )
 
+        # sends the temps list, and the heatmap update function to data manager
         self.dm.update_brake_temps(temps)
         self.dm.generate_disc_function(self.generate_disc_texture)
+
         with dpg.child_window(tag="Brake Temp Heatmap"):
             
             with dpg.group(horizontal=True):
-                with dpg.child_window(width=360, height=380, border=True):
+                with dpg.child_window(tag = "brake_disc_window", width=((dpg.get_viewport_width()-265)/2), height=430, no_scroll_with_mouse=True):
                     dpg.add_text(tag = "Brake Disc View", label="Brake Disc View (Paused)")
-                    dpg.add_spacer(height=5)
                     dpg.add_image("disc_texture", width=300, height=300)
+                    dpg.add_spacer(height=50)
+
                     with dpg.group(horizontal = True):
-                                    
+
+                        
                         dpg.add_button(label="Play", callback=lambda: self.dm.play_brake_temps(True))
                         dpg.add_button(label="Pause", callback=lambda: self.dm.play_brake_temps(False))
                         dpg.add_input_float(tag = "Play rate menu", 
@@ -88,86 +95,118 @@ class BrakeTempView:
                                             callback = lambda: self.dm.set_brake_temp_step(dpg.get_value("Play rate menu"))
                                            )
                         
-                with dpg.child_window(width=420, height=380, border=True):
+                with dpg.child_window(tag = "channel_temp_window",width=((dpg.get_viewport_width()-265)/2), height=430, border=True):
                     dpg.add_text("Channel Temperatures")
                     dpg.add_separator()
                     dpg.add_text("", tag="temp_text")
             
                 dpg.add_spacer(height=8)
-            
-               
-                    
-        
+        dpg.bind_item_theme("brake_disc_window", "cyan_border_theme")
+        dpg.bind_item_theme("channel_temp_window", "cyan_border_theme")
 
     def temp_to_color(self, temp):
-        # not exact conversions
-        blue_limit = 50   # 120  F
-        yellow_point = 100 # 210 F
-        red_point = 150    # 300 F
+        """
+        Converts Brake Temps to RGB values
 
-        # Below 300 F -> fully blue
-        if temp <= blue_limit:
+        """
+
+        # not exact conversions
+        blue_temp = 50   # 120  F
+        yellow_temp = 100 # 210 F
+        red_temp = 150    # 300 F
+
+        # below blue_temp is fully blue
+        if temp <= blue_temp:
             return 0.0, 0.0, 1.0
 
-        # Between 300 F and 350 F -> blue to yellow
-        elif temp <= yellow_point:
-            t = (temp - blue_limit) / (yellow_point - blue_limit)
+        # between blue_temp and yellow_temp 
+        elif temp <= yellow_temp:
+            colour_ratio = (temp - blue_temp) / (yellow_temp - blue_temp)
 
-            r = t
-            g = t
-            b = 1.0 - t
+            red = colour_ratio
+            green = colour_ratio
+            blue = 1.0 - colour_ratio
 
-            return r, g, b
+            return red, green, blue
 
-        # Between 350 F and 550 F -> yellow to red
-        elif temp <= red_point:
-            t = (temp - yellow_point) / (red_point - yellow_point)
+        # between yellow_temp and red_temp
+        elif temp <= red_temp:
+            colour_ratio = (temp - yellow_temp) / (red_temp - yellow_temp)
 
-            r = 1.0
-            g = 1.0 - t
-            b = 0.0
+            red = 1.0
+            green = 1.0 - colour_ratio
+            blue = 0.0
 
-            return r, g, b
+            return red, green, blue
 
-        # Above 550 F -> fully red
+        # fully red
         else:
             return 1.0, 0.0, 0.0
-    
-    def generate_disc_texture(self,temps):
-            """
-            Create RGBA image with:
-            - transparent center hole
-            - transparent outside the disc
-            - 16 concentric temperature bands
-            """
-            size = self.size
-            cx = size / 2
-            cy = size / 2
-    
-            image = np.zeros((size, size, 4), dtype=np.float32)
-    
-            band_thickness = (self.outer_radius - self.inner_radius) / self.bands
-    
-            y, x = np.indices((size, size))
-            dx = x - cx
-            dy = y - cy
-            r = np.sqrt(dx**2 + dy**2)
-    
-            # Visible region = between inner and outer radius
-            visible_mask = (r >= self.inner_radius) & (r <= self.outer_radius)
-    
-            # Compute band index for visible pixels
-            band_index = ((r - self.inner_radius) / band_thickness).astype(int)
-            band_index = np.clip(band_index, 0, self.bands - 1)
-    
-            for band in range(self.bands):
-                mask = visible_mask & (band_index == band)
-                temp = temps[band]
-                red, green, blue = self.temp_to_color(temp)
-    
-                image[mask, 0] = red
-                image[mask, 1] = green
-                image[mask, 2] = blue
-                image[mask, 3] = 1.0   # fully visible
-    
-            return image.flatten().tolist()
+
+        
+    def setup_disc_geometry(self):
+
+        # center point of the disc
+        x_centre = self.size / 2
+        y_centre = self.size / 2
+
+        band_thickness = (
+            self.outer_radius - self.inner_radius
+        ) / self.bands
+
+        # position of a pixel
+        y_value, x_value = np.indices((self.size, self.size))
+
+        # distance of a pixel from the centre
+        x_distance = x_value - x_centre
+        y_distance = y_value - y_centre
+
+        # distance in a straight line
+        hyp = np.sqrt(x_distance**2 + y_distance**2)
+
+        # makes only the pixels inside the wanted area visable
+        # think about the hole in the centre not showing and the outside being round
+        self.visible_mask = (
+            (hyp >= self.inner_radius) &
+            (hyp <= self.outer_radius)
+        )
+
+        band_index = ( (hyp - self.inner_radius) / band_thickness ).astype(int)
+
+        band_index = np.clip( band_index, 0, self.bands - 1)
+
+        # band 1 on the outside (flips the bands)
+        self.band_index = self.bands - 1 - band_index
+
+        # assigns and calculates which band each pixel belongs to
+        self.band_masks = [
+            self.visible_mask & (self.band_index == band)
+            for band in range(self.bands)
+        ]
+
+
+    def generate_disc_texture(self, temperatures):
+        """
+        updates the heatmaps
+        """
+        # the actual image that is shown (initally all pixels have a 0 value)
+        image = np.zeros(
+            (self.size, self.size, 4),
+            dtype=np.float32
+        )
+
+        # the temps are converted to RGB values for each band then converted to python list
+        for band in range(self.bands):
+
+            mask = self.band_masks[band]
+
+            red, green, blue = self.temp_to_color(
+                temperatures[band]
+            )
+
+            image[mask, 0] = red
+            image[mask, 1] = green
+            image[mask, 2] = blue
+            image[mask, 3] = 1.0
+
+        return image.flatten().tolist()
