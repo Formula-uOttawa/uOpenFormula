@@ -44,17 +44,9 @@ when their units match. All original numeric points are retained. Invalid or
 missing readings and recorded timestamp gaps split traces. Gear uses a step
 trace without rounding fractional readings. Finding markers indicate activation.
 
-**Reanalyze** rereads the selected source CSV. Project-file changes are picked up
-when the Monitor page is opened again. A CSV opened within the monitor stays
-selected until **Use project recording** is chosen; it does not replace the
-data used by other analysis pages. Loading a new project resets all views,
-including Monitor, to follow the new recording.
-
-For a standalone review, choose **New Project → Electrical → Monitor → Open CSV**.
-The global loader retains its existing CSV validation; this monitor-only route
-can also review recordings that the global numeric conversion rejects. When
-Monitor is using a loaded project recording, it hides the redundant Open CSV
-and Use project recording controls.
+**Reanalyze** rereads the selected source CSV. Loading a new project rebuilds all views,
+including Monitor, with the new recording. All recordings opened in the desktop
+app go through the shared project import and CSV validation.
 
 ## Timing and gear settings
 
@@ -79,7 +71,7 @@ sensor-specific detection rules.
 ## Architecture
 
 ```text
-DataManager.path (project CSV) OR Monitor's CSV picker
+Tkinter file picker -> shared DataManager -> project CSV path
     -> core.sensor_monitor.csv_loader (original raw readings)
     -> service.analyze_run
         -> timing + gear analysis + shared run report
@@ -128,16 +120,16 @@ rules/HTML template in PyInstaller builds. The existing executable build uses
 this hook and runs the tests before packaging. Windows builds must still be
 verified on Windows; a local Mac build does not establish Windows compatibility.
 
-The branch includes the Mac file-picker fix. Both main loading buttons use
-Dear PyGui on macOS, avoiding the native Tk crash from a background callback.
-Other platforms retain their existing native picker. Cancelling leaves the
-current project intact; a failed import displays an error and preserves the
-previous recording. A view that cannot compute its analysis shows an unavailable
-message without preventing other views from opening.
+The landing page and **File → Load Project** open the original Tkinter picker. On macOS the
+picker runs in its own process because Tk and Dear PyGui initialize AppKit
+separately. The picker returns the selected path to the shared DataManager.
+Cancelling keeps the current project. A failed import displays an error and
+preserves the previous recording. A view that cannot compute its analysis
+shows an unavailable message without preventing other views from opening.
 
-Eight additional loading regression tests cover both main Mac entry points
-avoiding Tk, cancellation, automatic Monitor population, missing oil channels,
-repeat loads, and failure recovery. Real-log smoke checks also load 15.csv and
+Eight additional loading regression tests cover the shared Tkinter picker on
+macOS, cancellation, automatic Monitor population, missing oil channels, repeat
+loads, and failure recovery. Real-log smoke checks also load 15.csv and
 the team's faran_a_3731.csv through the shared project-loading path.
 
 Four monitor layout checks bring the suite to 153 tests. They cover the original

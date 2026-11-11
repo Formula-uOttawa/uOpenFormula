@@ -1,8 +1,12 @@
-from ui.home_page import HomePage
+import json
+import sys
 
 if __name__ == "__main__":
-    pass
-else:
-    quit()
+    if sys.argv[1:] == ["--choose-project-file"]:
+        from ui.project_file_picker import ask_project_filename
 
-home_page = HomePage()
+        print(json.dumps(ask_project_filename()))
+    else:
+        from ui.home_page import HomePage
+
+        HomePage()

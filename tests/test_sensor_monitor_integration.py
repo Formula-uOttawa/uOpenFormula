@@ -6,7 +6,6 @@ from pathlib import Path
 import tempfile
 from types import SimpleNamespace
 import unittest
-from unittest.mock import patch
 from contextlib import redirect_stdout
 
 import dearpygui.dearpygui as dpg
@@ -16,7 +15,7 @@ from core.sensor_monitor.gear_report import analyze_gear
 from core.sensor_monitor.gear_rules import load_gear_rules
 from core.sensor_monitor.plot_data import finding_range, trace_segments, value_limits
 from core.sensor_monitor.run_report import build_run_report
-from core.sensor_monitor.service import analyze_loaded_recording, analyze_recording, analyze_run
+from core.sensor_monitor.service import analyze_loaded_recording, analyze_run
 from core.sensor_monitor.timing import build_timing
 from tests.sensor_monitor.test_gear_report import make_run
 from ui.home_page import HomePage, VIEW_MAP
@@ -113,41 +112,31 @@ class SensorMonitorViewTests(unittest.TestCase):
         self.directory.cleanup()
 
     def open_recording(self):
-        self.view._csv_selected(None, {'file_path_name': str(self.path)})
+        self.manager.path, self.manager.df = str(self.path), object()
+        self.view.refresh()
 
     def test_existing_navigation_node_discovers_monitor_view(self):
         self.assertIs(VIEW_MAP['elec_monitor'], MonitorView)
         self.assertIsNone(self.view.report)
 
-    def test_open_csv_uses_no_tk_and_does_not_replace_project_data(self):
-        with patch('ui.home_page.tk.Tk', side_effect=AssertionError('Native Tk picker must not be used')):
-            self.view._open_csv()
-            self.assertTrue(dpg.does_item_exist('sensor_monitor_csv_picker'))
-            self.assertEqual(dpg.get_item_configuration('sensor_monitor_csv_picker')['file_count'], 1)
-            self.view._close_dialog('sensor_monitor_csv_picker')
-            self.assertFalse(dpg.get_item_configuration('sensor_monitor_csv_picker')['show'])
-            self.view._open_csv()
-            self.view._active_tab = self.view.OPTIONS_TAB
-            self.view._csv_selected('sensor_monitor_csv_picker', {'file_path_name': str(self.path)})
-            self.assertFalse(dpg.get_item_configuration('sensor_monitor_csv_picker')['show'])
-            self.assertEqual(dpg.get_value(self.view.TABS), self.view.OVERVIEW_TAB)
-        self.assertEqual(len(self.view.report['sensors']), 9)
-        self.assertEqual(self.manager.path, '')
-        self.assertIsNone(self.manager.df)
-        self.assertTrue(dpg.does_item_exist('sensor_monitor_selected_plot'))
+    def test_empty_monitor_guides_users_to_the_shared_project_picker(self):
+        items = dpg.get_all_items()
+        labels = [dpg.get_item_label(item) for item in items]
+        self.assertNotIn('Open CSV', labels)
+        reanalyze = items[labels.index('Reanalyze')]
+        self.assertFalse(dpg.get_item_configuration(reanalyze)['enabled'])
+        text = [dpg.get_value(item) for item in items if dpg.get_item_type(item) == 'mvAppItemType::mvText']
+        self.assertIn('Choose a recording with File > Load Project.', text)
 
-    def test_failed_or_cancelled_selection_does_not_show_stale_results(self):
+    def test_reanalysis_of_removed_recording_does_not_show_stale_results(self):
         self.open_recording()
-        original = self.view.report
-        self.view._csv_selected(None, {})
-        self.assertIs(self.view.report, original)
-        self.view._csv_selected(None, {'file_path_name': str(Path(self.directory.name) / 'missing.csv')})
+        self.path.unlink()
+        self.view._reanalyze()
         self.assertIsNone(self.view.report)
         self.assertIn('Could not analyze', self.view.error)
 
     def test_changed_project_recording_refreshes_without_duplicate_widgets(self):
-        self.manager.path, self.manager.df = str(self.path), object()
-        self.view.refresh()
+        self.open_recording()
         first = self.view.report
         write_recording(self.directory.name, [0] * 30)
         self.manager.df = object()

@@ -48,8 +48,8 @@ class SensorMonitorLayoutTests(unittest.TestCase):
     def test_options_keep_selected_tab_and_sensor_when_reanalyzing(self):
         self.view._select_sensor(None, None, 'brake_front')
         self.view._tab_changed(None, dpg.get_alias_id(self.view.OPTIONS_TAB))
-        with patch('ui.views.elec_monitor.analyze_recording', return_value=self.view.report):
-            self.view.source_path = 'recording.csv'
+        self.view.manager.path, self.view.manager.df = 'recording.csv', object()
+        with patch('ui.views.elec_monitor.analyze_loaded_recording', return_value=self.view.report):
             self.view._reanalyze()
         self.assertEqual(dpg.get_value(self.view.TABS), self.view.OPTIONS_TAB)
         self.assertEqual(self.view.selected_id, 'brake_front')

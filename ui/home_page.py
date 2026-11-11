@@ -1,13 +1,13 @@
 import dearpygui.dearpygui as dpg
 from core.data_manager import DataManager
-import tkinter as tk
-from tkinter import filedialog
+from subprocess import CalledProcessError
+from tkinter import TclError
+from ui.project_file_picker import choose_project_file
 from ui.utils.load_texture import load_texture
 from treelib import Tree
 import pkgutil
 import ui.views as views_package
 import importlib
-import sys
 from pathlib import Path
 
 def _load_view_map():
@@ -301,49 +301,13 @@ class HomePage:
         self.show_home()
 
     def select_file_tk(self):
-        """
-        Select a project CSV; use Dear PyGui's picker on macOS.
-        """
-
-        # Tk's native macOS dialog cannot run in Dear PyGui's callback thread.
-        if sys.platform == "darwin":
-            return self.select_file_dpg()
-        
-        root = tk.Tk()
+        """Open the native Tk file dialog and load the selected project."""
         try:
-            root.withdraw()
-            path = filedialog.askopenfilename()
-        finally:
-            root.destroy()
+            path = choose_project_file()
+        except (OSError, TclError, CalledProcessError, ValueError) as error:
+            self._show_import_error(f"Could not open the file picker: {error}", has_recording=self.df is not None)
+            return False
         return self._load_project_file(path)
-
-    def select_file_dpg(self):
-        """Use the existing GUI toolkit for CSV selection on macOS."""
-        dialog_tag = "csv_import_dialog"
-        if dpg.does_item_exist(dialog_tag):
-            dpg.delete_item(dialog_tag)
-
-        def load_selected_file(sender, app_data):
-            self._close_file_dialog(sender)
-            self._load_project_file(app_data.get("file_path_name"))
-
-        samples = Path(__file__).resolve().parents[1] / "_debugging_files" / "USE_THESE"
-        default = Path(self.importer.path).parent if self.importer.path else samples
-        if not default.is_dir():
-            default = Path.home()
-        with dpg.file_dialog(
-            label="Load CSV recording", tag=dialog_tag,
-            directory_selector=False, file_count=1, modal=True, width=800, height=500,
-            default_path=str(default), callback=load_selected_file,
-            cancel_callback=self._close_file_dialog,
-        ):
-            dpg.add_file_extension(".csv")
-            dpg.add_file_extension(".*")
-
-    @staticmethod
-    def _close_file_dialog(sender, app_data=None, user_data=None):
-        if sender is not None and dpg.does_item_exist(sender):
-            dpg.hide_item(sender)
 
     def _load_project_file(self, path):
         """Commit a successful import, then rebuild views with the new manager."""

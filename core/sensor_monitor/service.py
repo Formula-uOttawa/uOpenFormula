@@ -34,5 +34,5 @@ def analyze_loaded_recording(data_manager, **options):
     cannot supply all that original evidence. Only source reads occur here.
     """
     if not data_manager.path or data_manager.df is None:
-        raise ValueError("Load a project recording first, or open a CSV in Sensor Monitor.")
+        raise ValueError("Load a project recording first.")
     return analyze_recording(data_manager.path, **options)

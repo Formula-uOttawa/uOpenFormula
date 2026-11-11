@@ -118,11 +118,8 @@ Choose a CSV using the normal **Load Project** button, then open **Electrical �
 Monitor**. The monitor automatically uses that recording. **File → Load Project**
 replaces the recording and refreshes the analysis pages. Pages with missing or
 incompatible input data show an unavailable message instead of blocking the
-other analyses. On macOS the main loader uses Dear PyGui's file picker.
-
-For an independent review, **New Project → Electrical → Monitor → Open CSV**
-remains available. The extra file-selection controls are hidden when Monitor
-is following a loaded project recording.
+other analyses. The loader uses the original Tkinter file picker and shared
+DataManager. On macOS Tk opens the dialog in a separate process from Dear PyGui.
 
 See [Sensor Monitor usage and architecture](docs/sensor-monitor.md) for the
 analysis scope, module structure, and validation commands.

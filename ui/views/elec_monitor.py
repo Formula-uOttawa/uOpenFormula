@@ -8,7 +8,7 @@ import dearpygui.dearpygui as dpg
 from core.sensor_monitor.gear_report import gear_label
 from core.sensor_monitor.plot_data import finding_range, trace_segments, value_limits
 from core.sensor_monitor.run_report import save_run_report
-from core.sensor_monitor.service import analyze_loaded_recording, analyze_recording
+from core.sensor_monitor.service import analyze_loaded_recording
 
 
 class MonitorView:
@@ -26,7 +26,6 @@ class MonitorView:
     def __init__(self, DataManager):
         self.manager = DataManager
         self.report = None
-        self.source_path = None  # None follows the project's selected recording.
         self.allow_estimated = False
         self.shifts_expected = None
         self.selected_id = "gear"
@@ -59,10 +58,8 @@ class MonitorView:
         token = (self.manager.path, id(self.manager.df))
         if token != self._project_token:
             self._project_token = token
-            if self.source_path is None:
-                self._analyze()
-                return
-        if self._built and not dpg.get_item_children(self.CONTENT, 1):
+            self._analyze()
+        elif self._built and not dpg.get_item_children(self.CONTENT, 1):
             self._render()
 
     def _analyze(self):
@@ -72,9 +69,7 @@ class MonitorView:
         self.focus_finding = False
         options = dict(allow_estimated=self.allow_estimated, shifts_expected=self.shifts_expected)
         try:
-            if self.source_path is not None:
-                self.report = analyze_recording(self.source_path, **options)
-            elif self.manager.path and self.manager.df is not None:
+            if self.manager.path and self.manager.df is not None:
                 self.report = analyze_loaded_recording(self.manager, **options)
         except (OSError, UnicodeError, ValueError, KeyError, TypeError, csv.Error) as error:
             self.error = f"Could not analyze the recording: {error}"
@@ -91,39 +86,6 @@ class MonitorView:
     def _set_shifts(self, sender, app_data, user_data=None):
         self.shifts_expected = {"Unknown": None, "Yes": True, "No": False}[app_data]
         self._analyze()
-
-    def _use_project(self, sender=None, app_data=None, user_data=None):
-        self.source_path = None
-        self._active_tab = self.OVERVIEW_TAB
-        self._project_token = (self.manager.path, id(self.manager.df))
-        if not self.manager.path or self.manager.df is None:
-            self.report = None
-            self.error = "No project recording is loaded. Use Open CSV to review a recording here."
-            self._render()
-            return
-        self._analyze()
-
-    def _open_csv(self, sender=None, app_data=None, user_data=None):
-        tag = "sensor_monitor_csv_picker"
-        if dpg.does_item_exist(tag):
-            dpg.delete_item(tag)
-        default = Path(self.source_path or self.manager.path).parent if (self.source_path or self.manager.path) else Path(__file__).resolve().parents[2] / "_debugging_files" / "USE_THESE"
-        if not default.is_dir():
-            default = Path.home()
-        with dpg.file_dialog(label="Open sensor recording", tag=tag, width=800, height=500,
-                             directory_selector=False, file_count=1,
-                             modal=True, default_path=str(default), callback=self._csv_selected,
-                             cancel_callback=self._close_dialog):
-            dpg.add_file_extension(".csv")
-            dpg.add_file_extension(".*")
-
-    def _csv_selected(self, sender, app_data, user_data=None):
-        self._close_dialog(sender)
-        path = app_data.get("file_path_name")
-        if path:
-            self.source_path = path
-            self._active_tab = self.OVERVIEW_TAB
-            self._analyze()
 
     def _export(self, sender=None, app_data=None, user_data=None):
         tag = "sensor_monitor_export_picker"
@@ -238,7 +200,7 @@ class MonitorView:
 
     def _render_overview(self):
         if self.report is None:
-            self._text("Load a project recording, or choose Open CSV in Options.", wrap=self._wrap_width())
+            self._text("Choose a recording with File > Load Project.", wrap=self._wrap_width())
             return
         counts = self.report["summary"]["counts"]
         self._text(f"{counts['review']} review | {counts['no_findings']} no findings | "
@@ -266,16 +228,13 @@ class MonitorView:
     def _render_options(self):
         has_project = bool(self.manager.path and self.manager.df is not None)
         self._text("Recording", color=(140, 197, 242))
-        if has_project and self.source_path is None:
+        if has_project:
             self._text("Using the project recording. Change it with File > Load Project.", wrap=self._wrap_width())
+        else:
+            self._text("Choose a recording with File > Load Project.", wrap=self._wrap_width())
         if self.report is not None:
             self._text(self.report["source"]["path"], wrap=self._wrap_width())
-        with dpg.group(horizontal=True):
-            if not has_project or self.source_path is not None:
-                dpg.add_button(label="Open CSV", callback=self._open_csv)
-            if has_project and self.source_path is not None:
-                dpg.add_button(label="Use project recording", callback=self._use_project)
-            dpg.add_button(label="Reanalyze", callback=self._reanalyze)
+        dpg.add_button(label="Reanalyze", callback=self._reanalyze, enabled=has_project)
         dpg.add_separator()
         self._text("Analysis options", color=(140, 197, 242))
         dpg.add_combo(["Unknown", "Yes", "No"], label="Shifts expected",

@@ -1,7 +1,9 @@
 import csv
 import io
+import json
 from contextlib import redirect_stdout
 from pathlib import Path
+from subprocess import CompletedProcess
 import tempfile
 import unittest
 from unittest.mock import patch
@@ -47,31 +49,48 @@ class ProjectLoadingTests(unittest.TestCase):
         with redirect_stdout(self.output):
             return self.page._load_project_file(path)
 
-    def test_mac_landing_and_menu_loaders_never_create_tk(self):
-        with patch('ui.home_page.sys.platform', 'darwin'), patch('ui.home_page.tk.Tk', side_effect=AssertionError('Tk causes a native Mac crash')):
-            self.page.first_file_selection()
-            self.assertFalse(hasattr(self.page, 'views'), 'Wait for asynchronous selection')
-            callback = dpg.get_item_callback('csv_import_dialog')
-            with redirect_stdout(self.output):
-                callback('csv_import_dialog', {'file_path_name': str(self.path)})
-            self.assertFalse(dpg.get_item_configuration('csv_import_dialog')['show'])
-            self.assertEqual(self.page.file_path, str(self.path))
-            self.page.select_file_tk()  # Same entry point used by File / Load Project.
-            self.assertTrue(dpg.get_item_configuration('csv_import_dialog')['show'])
+    def test_mac_landing_and_menu_use_the_same_tk_process_and_importer(self):
+        self.page.init_menu_bar()
+        menu_callback = next(
+            dpg.get_item_callback(item) for item in dpg.get_all_items()
+            if dpg.get_item_label(item) == 'Load Project'
+        )
+        second = self.recording('second.csv', [2] * 12 + [3] * 12)
+
+        for callback, path in ((self.page.first_file_selection, self.path), (menu_callback, second)):
+            with self.subTest(path=path.name):
+                with (
+                    patch('ui.project_file_picker.sys.platform', 'darwin'),
+                    patch('ui.project_file_picker.tk.Tk',
+                          side_effect=AssertionError('Tk must open in its own process')),
+                    patch('ui.project_file_picker.subprocess.run',
+                          return_value=CompletedProcess([], 0, json.dumps(str(path)))) as picker,
+                    redirect_stdout(self.output),
+                ):
+                    callback()
+                picker.assert_called_once()
+                self.assertEqual(picker.call_args.args[0][-1], '--choose-project-file')
+                self.assertEqual(self.page.file_path, str(path))
+                self.assertEqual(self.page.views['elec_monitor'].report['source']['path'], str(path.resolve()))
 
     def test_cancel_keeps_the_landing_page_and_does_not_import(self):
-        with patch('ui.home_page.sys.platform', 'darwin'), patch('ui.home_page.dpg.file_dialog', wraps=dpg.file_dialog) as dialog:
+        with (
+            patch('ui.project_file_picker.sys.platform', 'darwin'),
+            patch('ui.project_file_picker.subprocess.run', return_value=CompletedProcess([], 0, json.dumps(''))),
+        ):
             self.page.first_file_selection()
-        dialog.call_args.kwargs['cancel_callback']('csv_import_dialog', {})
         self.assertIsNone(self.page.df)
         self.assertFalse(hasattr(self.page, 'views'))
-        self.assertFalse(dpg.get_item_configuration('csv_import_dialog')['show'])
         self.assertTrue(dpg.get_item_children('Landing Page', 1))
 
     def test_native_cancel_destroys_tk_and_keeps_the_recording(self):
         self.assertTrue(self.load(self.path))
         manager = self.page.importer
-        with patch('ui.home_page.sys.platform', 'win32'), patch('ui.home_page.tk.Tk') as root, patch('ui.home_page.filedialog.askopenfilename', return_value=''):
+        with (
+            patch('ui.project_file_picker.sys.platform', 'win32'),
+            patch('ui.project_file_picker.tk.Tk') as root,
+            patch('ui.project_file_picker.filedialog.askopenfilename', return_value=''),
+        ):
             self.assertFalse(self.page.select_file_tk())
         root.return_value.destroy.assert_called_once()
         self.assertIs(self.page.importer, manager)
@@ -80,7 +99,6 @@ class ProjectLoadingTests(unittest.TestCase):
         self.assertTrue(self.load(self.path))
         monitor = self.page.views['elec_monitor']
         self.assertIs(monitor.manager, self.page.importer)
-        self.assertIsNone(monitor.source_path)
         self.assertEqual(monitor.report['source']['path'], str(self.path.resolve()))
         labels = [dpg.get_item_configuration(item).get('label') for item in dpg.get_all_items()]
         self.assertNotIn('Open CSV', labels)
