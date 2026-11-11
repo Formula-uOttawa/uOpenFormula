@@ -1,6 +1,10 @@
 import os
-import pandas as pd
 from pathlib import Path
+import tkinter as tk
+import pandas as pd
+from tkinter import filedialog
+data_manager_log={}
+selected_files={}
 
 class DataManager:
     """Gathers data from a motec csv file.
@@ -19,6 +23,7 @@ class DataManager:
         self.metadata = {}          # Metadata that is located at the top of the csv files
         self.channels = {}          # Channel items with their units
         self.header_index = None    # Index of the header row
+        
     
     def import_and_validate(self, path):
         """Global method to import and validate the MoTeC CSV file."""
@@ -129,6 +134,7 @@ class DataManager:
         if all(self.df_excl_time[col].nunique() <= 1 for col in self.df_excl_time.columns):
             raise ValueError("All sensors show no variation (excluding 'Time' column).")
         print("[DEBUG] Data variation check (excluding 'Time') passed.")
+    
 
 def _project_root() -> Path:
     "Walks up the directory tree until it finds .git"
@@ -147,7 +153,7 @@ def _test_data_manager():
     GLOBAL_FOLDER = _project_root() / "_debugging_files"
     files = [str(p) for p in GLOBAL_FOLDER.rglob("*.csv")]
     # TODO add check that files isnt empty
-    if len(files==0):
+    if len(files)==0:
         raise ImportError("Debugging files not found")
     
     for file in files[:-4]: # The last 4 are intentionally broken files (for testing)
@@ -164,3 +170,7 @@ def _test_data_manager():
 if __name__ == "__main__":
     _test_data_manager()
     
+
+        
+        
+        

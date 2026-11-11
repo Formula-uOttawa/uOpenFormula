@@ -14,7 +14,7 @@ def load_texture(file_path):
     full_path = resource_path(file_path)
     result = dpg.load_image(full_path)
     if result is None:
-        raise FileNotFoundError(f"Could not load image: {full_path}")
+        raise FileNotFoundError(f'Could not load image: {full_path}')
     w, h, channels, data = result
     with dpg.texture_registry():
         texture = dpg.add_static_texture(w, h, data)

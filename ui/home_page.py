@@ -1,5 +1,5 @@
 import dearpygui.dearpygui as dpg
-from core.data_manager import DataManager
+from core.data_manager import DataManager, data_manager_log, selected_files
 import tkinter as tk
 from tkinter import filedialog
 from ui.utils.load_texture import load_texture
@@ -7,6 +7,7 @@ from treelib import Tree
 import pkgutil
 import ui.views as views_package
 import importlib
+from pathlib import Path
 
 def _load_view_map():
     """Auto-discover all view classes from ui/views/.
@@ -29,19 +30,28 @@ VIEW_MAP = _load_view_map()
 class HomePage:
     """Stores the logic of the home and landing page gui. TODO do this docstring"""
     
-    file_path = ""
+    file_paths = []
     df = None
     importer = DataManager()
+    
+    
     
     SWAPPABLE_WINDOWS = []  # populated dynamically from tree
     
     def __init__(self):
         self.show_home_page()
+      
     
     def show_home_page(self):
         """Initializes the homepage and loads all necessary elements."""
         
         dpg.create_context()
+        # adding emojis
+        with dpg.font_registry():
+         with dpg.font("C:/Windows/Fonts/seguisym.ttf", 18) as symbol_font:
+             dpg.add_font_chars([0x2705, 0x274C])
+
+        dpg.bind_font(symbol_font)
         
         # Set theme for button rounding.
         with dpg.theme() as global_theme:
@@ -85,7 +95,7 @@ class HomePage:
         with dpg.viewport_menu_bar(tag="Main Menu Bar"):  # TODO: revisions to menu bar
             with dpg.menu(label="File"):
                 dpg.add_menu_item(label="Save Project", callback=lambda: None)
-                dpg.add_menu_item(label="Load Project", callback=lambda: self.select_file_tk())
+                dpg.add_menu_item(label="Load Project", callback=lambda: select_file_tk(self.show_home,self.get_max_files, self.refresh_active_view))
                 
             with dpg.menu(label="Graph"):
                 dpg.add_menu_item(label="Make New Graph", callback=lambda: self.make_graph_window(400, 150, 450, 770))
@@ -111,6 +121,7 @@ class HomePage:
         self.nav.create_node("Coastdown", "aero_coastdown", parent="aero")
         self.nav.create_node("Yaw Rate", "aero_yawrate", parent="aero")
         self.nav.create_node("Lap time", "aero_laptime", parent="aero")
+        self.nav.create_node("example", "example_view", parent="aero")
         
         self.nav.create_node("Electrical", "elec", parent="home")
         self.nav.create_node("Monitor", "elec_monitor", parent="elec")
@@ -158,6 +169,13 @@ class HomePage:
             self._refresh_sidebar()
             self._switch_main_view(view_key)
 
+    def refresh_active_view(self):
+        update_file_checkboxes(self.get_max_files)
+        view = self.views.get(getattr(self, "active_view_key", None))
+        if view and hasattr(view, "refresh"):
+            view.selected_files = self.files_for_view(view) #shows again the files after it was refreshed
+            view.refresh()
+
     def pop_nav(self):
         """Go up one level."""
         if len(self.nav_stack) > 1:
@@ -185,27 +203,29 @@ class HomePage:
         for win in self.SWAPPABLE_WINDOWS:
             if dpg.does_item_exist(win):
                 dpg.configure_item(win, show=(win == view_key))
+        self.active_view_key = view_key
+        self.refresh_active_view()
 
     def _refresh_sidebar(self):
         """Wipe and redraw sidebar contents for the current nav stack top."""
-        dpg.delete_item("navbar", children_only=True)
+        dpg.delete_item("nav_links", children_only=True)
         self._build_sidebar_for(self.nav_stack[-1])
     
     def _build_sidebar_for(self, view_key):
         node = self.nav.get_node(view_key)
         children = self.nav.children(view_key)
 
-        dpg.add_text(node.tag, parent="navbar")
-        dpg.add_separator(parent="navbar")
+        dpg.add_text(node.tag, parent="nav_links")
+        dpg.add_separator(parent="nav_links")
 
         if len(self.nav_stack) > 1:
             dpg.add_button(
                 label="<- Back",
                 callback=lambda: self.pop_nav(),
                 width=-1,
-                parent="navbar",
+                parent="nav_links",
             )
-            dpg.add_separator(parent="navbar")
+            dpg.add_separator(parent="nav_links")
 
         for child in children:
             dpg.add_button(
@@ -214,9 +234,16 @@ class HomePage:
                 user_data=child.identifier,
                 callback=lambda s, a, u: self.push_nav(u),
                 width=-1,
-                parent="navbar",
+                parent="nav_links",
             )
-    
+    def get_max_files(self):
+        view_key = getattr(self, "active_view_key", None)
+        view = self.views.get(view_key)
+        return getattr(view, "max_files", 0)
+    # takes a view as an argument and return the files that could be shown respecting the limit files
+    def files_for_view(self, view):
+        limit = max(0, getattr(view, "max_files", 0))
+        return dict(list(selected_files.items())[:limit])
     def show_landing(self):
         # Create the main window.
         with dpg.window(tag="Landing Page", no_move=True, no_resize=True, pos=(0, 0)):
@@ -272,7 +299,7 @@ class HomePage:
                                                  frame_padding=0,
                                                  width=250,
                                                  height=250,
-                                                 callback=lambda: self.first_file_selection())
+                                                 callback=lambda: select_file_tk(self.show_home,self.get_max_files, self.refresh_active_view))
                         dpg.add_spacer(width=63)
 
                 with dpg.table_row():
@@ -348,6 +375,11 @@ class HomePage:
             height=dpg.get_viewport_height(),
             no_close=True, no_move=True, no_collapse=True, no_resize=True
         ):
+            dpg.add_group(tag="nav_links")
+            dpg.add_separator()
+            dpg.add_group(tag="import_selector")
+            dpg.add_text("Import Selector", parent="import_selector")
+            dpg.add_separator(parent="import_selector")
             self._build_sidebar_for("home")
 
         # Create all view windows (hidden by default except first)
@@ -356,6 +388,8 @@ class HomePage:
                 continue
             # First child of home is the default
             default_view = self.nav.children("home")[0].identifier
+            self.active_view_key = default_view
+            
             is_first = (node.identifier == default_view)
             with dpg.window(
                 label=node.tag,
@@ -369,8 +403,125 @@ class HomePage:
             ):
                 if node.identifier in VIEW_MAP:
                     view = VIEW_MAP[node.identifier](self.importer)
+                    view.selected_files = self.files_for_view(view) #Giving each view the files it could see
                     view.build(node.identifier)       # parent_tag = window tag
                     self.views[node.identifier] = view
                 else:
                     # Parent node with no dedicated view — just a placeholder
                     dpg.add_text(f"{node.tag}: select a sub-view from the sidebar.")
+def select_file_tk(show_home,get_max_files,refresh_view):
+        """
+        Select a file using native operating system UI.
+        """
+        
+        root = tk.Tk()
+        root.withdraw()
+        window_height = 100
+        file_paths = filedialog.askopenfilenames()
+        root.destroy()
+        if not file_paths:
+            return
+        
+                  
+        dpg.delete_item("Landing Page", children_only=True)
+            
+        
+        if not dpg.does_item_exist("import_selector"):
+            dpg.delete_item("Landing Page", children_only=True)
+            show_home()
+        #     with dpg.window(label="Import Selector",tag="import", width=400, height=window_height):
+                        
+        #                 pass
+            
+
+        
+        for file_path in file_paths:
+                    if file_path in data_manager_log:
+                        continue
+                    
+                    data_manager_for_files = DataManager()
+                    
+                    try:
+                        data_manager_for_files.import_and_validate(file_path) 
+                        
+                    except(FileNotFoundError,ValueError)as e:
+                        
+                        dpg.add_text(f"    {Path(file_path).name} ❌ ",color=(255, 100, 100),parent="import_selector")
+                        continue
+                    data_manager_log[file_path] = data_manager_for_files
+                    dpg.add_checkbox(label=f"{Path(file_path).name} ✅",callback=show_selected_window,user_data=(file_path, get_max_files, refresh_view),parent="import_selector")
+                    dpg.add_text(f"{Path(file_path).name} ✅",tag=f"file_label::{file_path}",parent="import_selector",show=False)
+                    update_file_checkboxes(get_max_files)          
+                                                
+                                        
+                
+def show_selected_window(checkbox, check_status,user_data):
+            
+            file,get_max_files,refresh_view  =user_data
+            window_tag = f"window : {file}"
+            if check_status:
+                if not dpg.does_item_exist(window_tag):
+                    if(len(selected_files)>=get_max_files()):
+                        if not dpg.does_item_exist("max_error"):
+                         dpg.add_text("The maximum number of files was selected",color=(255, 100, 100),parent="import_selector",tag="max_error")
+                    else : 
+                         if dpg.does_item_exist("max_error"):
+                              dpg.delete_item("max_error")
+                         
+                         manager=  data_manager_log[file]
+                         selected_files[file] = data_manager_log[file]
+                         df= manager.df
+                         with dpg.window(label=Path(file).name, tag=window_tag,  width=800,height=500, no_close=True):
+                                                
+                                                data_array = df.to_numpy()
+                                                with dpg.table(header_row=True,
+                                                               policy=dpg.mvTable_SizingFixedFit,
+                                                               resizable=True,
+                                                               scrollX=True, scrollY=True,
+                                                               borders_innerH=True, borders_outerH=True,
+                                                               borders_innerV=True, borders_outerV=True):
+                                                    for col in df.columns:
+                                                        dpg.add_table_column(label=str(col))
+                                                        
+                                                    # Add Rows and Cells
+                                                    for i in range(df.shape[0]):
+                                                        with dpg.table_row():
+                                                            for j in range(df.shape[1]):
+                                                                # Each cell is of type selectable, can also be text or input_text
+                                                                dpg.add_selectable(label=str(data_array[i, j]),
+                                                                                   callback=lambda:None)
+                else:
+                  selected_files[file] = data_manager_log[file]
+                  update_file_checkboxes(get_max_files)
+                  dpg.show_item(window_tag)
+                  if check_status and len(selected_files) == get_max_files(): #if max files selecetd reached
+                      if dpg.does_item_exist("max_files_popup"): 
+                          dpg.delete_item("max_files_popup")
+                      with dpg.window(label="Maximum files reached",tag="max_files_popup",modal=True,autosize=True,no_resize=True):
+                            dpg.add_text(f"You have selected the maximum of {get_max_files()} files.")
+                            dpg.add_text("You should unselect a file before adding one")
+                            dpg.add_button(label="OK",callback=lambda: dpg.delete_item("max_files_popup")) #pop up error disappears after clicking ok
+                  
+            else:
+                 
+                 selected_files.pop(file,None)
+                 update_file_checkboxes(get_max_files)
+                 if dpg.does_item_exist(window_tag):
+                      dpg.hide_item(window_tag)
+                 if dpg.does_item_exist("max_error"):
+                      dpg.delete_item("max_error")
+            refresh_view()
+def update_file_checkboxes(get_max_files):
+    limit = get_max_files()
+    at_limit = len(selected_files) >= limit #true if selected number of files rech the maxim number of files selectable
+    children = dpg.get_item_children("import_selector", 1) or []
+
+    for item in children:
+        if dpg.get_item_type(item) == "mvAppItemType::mvCheckbox": #checks if its a checkbox
+            file_path, _, _ = dpg.get_item_user_data(item)
+            is_selected = file_path in selected_files #checks if the file is selected
+
+            dpg.set_value(item, is_selected) #check id selected and not otherwise
+            show_checkbox = limit > 0 and (is_selected or not at_limit)
+            dpg.configure_item(item, show=show_checkbox, enabled=True) #make checkbox if its selcted or the view still did not reach the maximum files
+            dpg.configure_item(f"file_label::{file_path}",show=not show_checkbox) #its a text otherwise
