@@ -8,6 +8,7 @@ import pkgutil
 import ui.views as views_package
 import importlib
 
+
 def _load_view_map():
     """Auto-discover all view classes from ui/views/.
     
@@ -31,24 +32,16 @@ class HomePage:
     
     file_path = ""
     df = None
-    importer = DataManager()
+    
     
     SWAPPABLE_WINDOWS = []  # populated dynamically from tree
+
     
-    def __init__(self):
-        self.show_home_page()
+    def __init__(self, importer):
+        self.importer = importer
+
     
-    def show_home_page(self):
-        """Initializes the homepage and loads all necessary elements."""
-        
-        dpg.create_context()
-        
-        # Set theme for button rounding.
-        with dpg.theme() as global_theme:
-            with dpg.theme_component(dpg.mvButton):
-                dpg.add_theme_style(dpg.mvStyleVar_FrameRounding, 10.0)
-        dpg.bind_theme(global_theme)
-        
+    def nav_themes(self):
         # Active nav button highlighted
         with dpg.theme() as self.theme_nav_active:
             with dpg.theme_component(dpg.mvButton):
@@ -56,56 +49,19 @@ class HomePage:
                 dpg.add_theme_color(dpg.mvThemeCol_ButtonHovered, (90, 145, 175, 255))
                 dpg.add_theme_color(dpg.mvThemeCol_ButtonActive,  (70, 115, 145, 255))
                 dpg.add_theme_style(dpg.mvStyleVar_FrameRounding, 10.0)
-
-        # Inactive nav button default
+            
+                        # Inactive nav button default
         with dpg.theme() as self.theme_nav_inactive:
             with dpg.theme_component(dpg.mvButton):
                 dpg.add_theme_color(dpg.mvThemeCol_Button,        (50, 50, 50, 255))
                 dpg.add_theme_color(dpg.mvThemeCol_ButtonHovered, (70, 70, 70, 255))
                 dpg.add_theme_color(dpg.mvThemeCol_ButtonActive,  (90, 90, 90, 255))
                 dpg.add_theme_style(dpg.mvStyleVar_FrameRounding, 10.0)
-        
-        # Create and populate main viewport
-        dpg.create_viewport(title='uOpenFormula',
-                            width=800, height=600)
-        
-        self.init_menu_bar()
-        self.show_landing()
-        
-        dpg.set_primary_window("Landing Page", True)
-        dpg.set_viewport_large_icon("assets/Formula_uottawa.ico")
-        dpg.setup_dearpygui()
-        dpg.set_viewport_pos([0, 0])
-        dpg.show_viewport(maximized=True)  # prevents window sizing and positioning from failing on initial creation
-        dpg.start_dearpygui()
-        dpg.destroy_context()
     
-    def init_menu_bar(self):
-        # Add and populate menu bar at the top.
-        with dpg.viewport_menu_bar(tag="Main Menu Bar"):  # TODO: revisions to menu bar
-            with dpg.menu(label="File"):
-                dpg.add_menu_item(label="Save Project", callback=lambda: None)
-                dpg.add_menu_item(label="Load Project", callback=lambda: self.select_file_tk())
-                
-            with dpg.menu(label="Graph"):
-                dpg.add_menu_item(label="Make New Graph", callback=lambda: self.make_graph_window(400, 150, 450, 770))
-            
-            with dpg.menu(label="Filter"):
-                dpg.add_menu_item(label="Low-pass", callback=lambda: None)
-                dpg.add_menu_item(label="High-pass", callback=lambda: None)
-                dpg.add_menu_item(label="Band-pass", callback=lambda: None)
-            
-            with dpg.menu(label="Trim"):
-                pass
-            
-            with dpg.menu(label="Correlation"):
-                dpg.add_menu_item(label="Linear", callback=lambda: None)
     
     def _build_nav_tree(self):
         self.nav = Tree()
         self.nav.create_node("Home", "home")
-
-        self.nav.create_node("Raw Data", "raw_data", parent="home")
 
         self.nav.create_node("Aerodynamics", "aero", parent="home")
         self.nav.create_node("Coastdown", "aero_coastdown", parent="aero")
@@ -128,9 +84,11 @@ class HomePage:
         self.nav.create_node("Torsion test", "frame_torsion", parent="frame")
         
         self.nav.create_node("Suspension", "susp", parent="home")
+        self.nav.create_node("Brake Temps", "susp_brake", parent="susp")
         self.nav.create_node("Frequency analysis", "susp_freq", parent="susp")
         self.nav.create_node("Slip angle", "susp_slip", parent="susp")
-        
+
+        self.nav.create_node("Raw Data", "raw_data", parent="home")
         
 
         # How we track the current state of the navbar. List gets appended with
@@ -143,6 +101,7 @@ class HomePage:
             for node in self.nav.all_nodes()
             if node.identifier != "home"
         ]
+
         
     def push_nav(self, view_key):
         """Drill into a child view, or select a leaf without redrawing sidebar."""
@@ -158,12 +117,14 @@ class HomePage:
             self._refresh_sidebar()
             self._switch_main_view(view_key)
 
+
     def pop_nav(self):
         """Go up one level."""
         if len(self.nav_stack) > 1:
             self.nav_stack.pop()
             self._refresh_sidebar()
             self._switch_main_view(self.nav_stack[-1])
+
     
     def _update_highlights(self, active_key):
         """Highlight the active button among its siblings in the current sidebar."""
@@ -179,6 +140,7 @@ class HomePage:
                     else self.theme_nav_inactive
                 )
                 dpg.bind_item_theme(btn_tag, theme)
+
     
     def _switch_main_view(self, view_key):
         """Show only the window matching view_key, hide all others."""
@@ -186,10 +148,12 @@ class HomePage:
             if dpg.does_item_exist(win):
                 dpg.configure_item(win, show=(win == view_key))
 
+
     def _refresh_sidebar(self):
         """Wipe and redraw sidebar contents for the current nav stack top."""
         dpg.delete_item("navbar", children_only=True)
         self._build_sidebar_for(self.nav_stack[-1])
+
     
     def _build_sidebar_for(self, view_key):
         node = self.nav.get_node(view_key)
@@ -216,9 +180,15 @@ class HomePage:
                 width=-1,
                 parent="navbar",
             )
+
     
     def show_landing(self):
         # Create the main window.
+
+        viewport_width = dpg.get_viewport_width()
+        viewport_height = dpg.get_viewport_height()
+        vertical_padding = (viewport_height-300)/2
+
         with dpg.window(tag="Landing Page", no_move=True, no_resize=True, pos=(0, 0)):
             
             # This table houses the logo, new project, and load project buttons at the start of the program.
@@ -233,8 +203,9 @@ class HomePage:
                 dpg.add_table_column(width_fixed=True, init_width_or_weight=0.0)
                 dpg.add_table_column(width_stretch=True, init_width_or_weight=1.0)
                 
+                
                 with dpg.table_row():
-                    dpg.add_spacer(height=150)
+                    dpg.add_spacer(height=vertical_padding)
                 
                 with dpg.table_row():
                     dpg.add_spacer()
@@ -251,14 +222,17 @@ class HomePage:
                         with dpg.group():
                             with dpg.group(horizontal=True):
                                 dpg.add_spacer(width=80)
-                                dpg.add_text("New Project")
+                                dpg.add_text("Load Project")
 
-                            dpg.add_image_button(load_texture("assets/plus.png"),
-                                                 background_color=(0,0,0,70),
+                            dpg.add_image_button(load_texture("assets/file_icon.png"),
+                                                 tag="load_project_button",
+                                                 background_color=(0,0,0,0),
                                                  frame_padding=0,
                                                  width=250,
                                                  height=250,
-                                                 callback=lambda:self.new_project())
+                                                 callback=lambda: self.load_project()
+                                                )
+                            
 
                         dpg.add_spacer(width=60)
 
@@ -266,38 +240,52 @@ class HomePage:
 
                             with dpg.group(horizontal=True):
                                 dpg.add_spacer(width=82)
-                                dpg.add_text("Load Project")
-                            dpg.add_image_button(load_texture("assets/file_icon.png"),
-                                                 background_color=(0,0,0,70),
+                                dpg.add_text("New Project")
+
+                            dpg.add_image_button(load_texture("assets/plus.png"),
+                                                 tag="new_project_button",
+                                                 background_color=(0,0,0,0),
                                                  frame_padding=0,
                                                  width=250,
                                                  height=250,
-                                                 callback=lambda: self.first_file_selection())
+                                                 callback=lambda:self.new_project()
+                                                )
+                            
                         dpg.add_spacer(width=63)
 
                 with dpg.table_row():
-                    dpg.add_spacer(height=97)
+                    dpg.add_spacer(height=(dpg.get_viewport_height()-510))
 
                 with dpg.table_row():
-                    dpg.add_text(default_value="Version: Pre-alpha", color=[255, 255, 255, 120])
+                    dpg.add_text(default_value="Version: Alpha", color=[255, 255, 255, 200])
 
 
-    def first_file_selection(self):
-
-        self.select_file_tk()
-        self.new_project()
+    def new_project(self):
+        # meant for future use
+        
+        self.load_project()
 
         
-    def new_project(self):
-        dpg.delete_item("Landing Page", children_only=True)
+    def load_project(self):
+        # meant for future use
+        self.load_file()
+
+        if dpg.does_item_exist("Landing Page"):
+            dpg.delete_item("Landing Page", children_only=True)
                 
         self.show_home()
+
+
+    def load_file(self):
+        self.select_file_tk()
+
 
     def select_file_tk(self):
         """
         Select a file using native operating system UI.
         """
-        
+
+        #TODO: move this to the new data manager view
         root = tk.Tk()
         root.withdraw()
         self.file_path = filedialog.askopenfilename()
@@ -306,35 +294,6 @@ class HomePage:
         # This runs load() + validations and returns the DataFrame
         # TODO: this makes two copies of df? If so investigate making this not a hard copy.
         self.df = self.importer.import_and_validate(self.file_path)
-        
-        #self.show_dataframe()
-
-
-        
-    def show_dataframe(self):
-        #TODO make docstrings
-
-        if dpg.does_item_exist("show_data"):
-            dpg.delete_item("show_data")
-
-        with dpg.window(tag="show_data", label="Raw Data",width=800,height=500,no_close=True):
-            data_array = self.df.to_numpy()
-            with dpg.table(header_row=True,
-                           policy=dpg.mvTable_SizingFixedFit,
-                           resizable=True,
-                           scrollX=True, scrollY=True,
-                           borders_innerH=True, borders_outerH=True,
-                           borders_innerV=True, borders_outerV=True):
-                for col in self.df.columns:
-                    dpg.add_table_column(label=str(col))
-                    
-                # Add Rows and Cells
-                for i in range(self.df.shape[0]):
-                    with dpg.table_row():
-                        for j in range(self.df.shape[1]):
-                            # Each cell is of type selectable, can also be text or input_text
-                            dpg.add_selectable(label=str(data_array[i, j]),
-                                               callback=lambda:None)
 
     
     def show_home(self):
@@ -344,11 +303,14 @@ class HomePage:
         
         with dpg.window(
             label="Navigation", tag="navbar",
-            pos=[0, 0], width=200,
-            height=dpg.get_viewport_height(),
+            pos=[0, 27], width=200,
+            height=(dpg.get_viewport_height()-67),
             no_close=True, no_move=True, no_collapse=True, no_resize=True
         ):
             self._build_sidebar_for("home")
+
+
+        dpg.bind_item_theme("navbar", "cyan_border_theme")
 
         # Create all view windows (hidden by default except first)
         for node in self.nav.all_nodes():
@@ -360,13 +322,14 @@ class HomePage:
             with dpg.window(
                 label=node.tag,
                 tag=node.identifier,
-                pos=[200, 0],
-                width=dpg.get_viewport_width() - 200,
-                height=dpg.get_viewport_height(),
+                pos=[201, 27],
+                width=dpg.get_viewport_width() - 219,
+                height=dpg.get_viewport_height() - 67,
                 no_close=True, no_move=True,
                 no_resize=True, no_collapse=True,
                 show=is_first,
             ):
+                dpg.bind_item_theme(node.identifier, "cyan_border_theme")
                 if node.identifier in VIEW_MAP:
                     view = VIEW_MAP[node.identifier](self.importer)
                     view.build(node.identifier)       # parent_tag = window tag
@@ -374,3 +337,5 @@ class HomePage:
                 else:
                     # Parent node with no dedicated view — just a placeholder
                     dpg.add_text(f"{node.tag}: select a sub-view from the sidebar.")
+
+        
