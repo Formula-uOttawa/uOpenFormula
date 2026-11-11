@@ -13,8 +13,7 @@ class RawDataView:
             
             dpg.add_text("Raw Data View", parent=parent_tag)
             dpg.add_separator(parent=parent_tag)
-            dpg.add_text("Load a file to see data.", 
-                     tag="raw_data_placeholder", parent=parent_tag)
+            self.refresh()
         else:
              self.refresh()
 
@@ -23,21 +22,24 @@ class RawDataView:
         if dpg.does_item_exist("show_data"):
                     dpg.delete_item("show_data")
         
-        with dpg.child_window(tag="show_data", label="Raw Data",):
-            data_array = self.df.to_numpy()
+        with dpg.child_window(tag="show_data", label="Raw Data", parent="raw_data"):
+            if not self.selected_files:
+                 dpg.add_text("Select a CSV file to see its raw data.")
+                 return
+            manager = next(iter(self.selected_files.values()))
+            df = manager.df
+            data_array = df.to_numpy()
             with dpg.table(header_row=True,
                 policy=dpg.mvTable_SizingFixedFit,
                 resizable=True,
                 scrollX=True, scrollY=True,
                 borders_innerH=True, borders_outerH=True,
                 borders_innerV=True, borders_outerV=True,height = dpg.get_viewport_height() - 100):
-                for col in self.df.columns:
+                for col in df.columns:
                     dpg.add_table_column(label=str(col))
                             
                 # Add Rows and Cells
-                for i in range(self.df.shape[0]):
+                for row in data_array:
                     with dpg.table_row():
-                        for j in range(self.df.shape[1]):
-                            # Each cell is of type selectable, can also be text or input_text
-                            dpg.add_selectable( label=str(data_array[i, j]),
-                                                callback=lambda:None)
+                        for value in row:
+                            dpg.add_selectable(label=str(value))

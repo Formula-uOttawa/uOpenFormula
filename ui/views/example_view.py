@@ -1,5 +1,4 @@
 import dearpygui.dearpygui as dpg
-from core.log_data_manager import selected_files
 from pathlib import Path
 
 class ExampleView:
@@ -17,8 +16,8 @@ class ExampleView:
         """Called after new data loads to update content."""
         dpg.delete_item(self.file_group, children_only=True)
         # build your plots here using self.dm.df
-        if(selected_files):
-                    for path, manager in selected_files.items():
+        if(self.selected_files):
+                    for path, manager in self.selected_files.items():
                         
                         dpg.add_text(f"{Path(path).name}: {len(manager.df)} rows",parent=self.file_group)
                         

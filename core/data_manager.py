@@ -1,10 +1,10 @@
 import os
-import pandas as pd
 from pathlib import Path
-import dearpygui.dearpygui as dpg
 import tkinter as tk
+import pandas as pd
 from tkinter import filedialog
-from core.log_data_manager import data_manager_log,selected_files
+data_manager_log={}
+selected_files={}
 
 class DataManager:
     """Gathers data from a motec csv file.
@@ -23,6 +23,7 @@ class DataManager:
         self.metadata = {}          # Metadata that is located at the top of the csv files
         self.channels = {}          # Channel items with their units
         self.header_index = None    # Index of the header row
+        
     
     def import_and_validate(self, path):
         """Global method to import and validate the MoTeC CSV file."""
@@ -133,96 +134,7 @@ class DataManager:
         if all(self.df_excl_time[col].nunique() <= 1 for col in self.df_excl_time.columns):
             raise ValueError("All sensors show no variation (excluding 'Time' column).")
         print("[DEBUG] Data variation check (excluding 'Time') passed.")
-    def select_file_tk(show_home,get_max_files,refresh_view):
-        """
-        Select a file using native operating system UI.
-        """
-        
-        root = tk.Tk()
-        root.withdraw()
-        window_height = 100
-        file_paths = filedialog.askopenfilenames()
-        root.destroy()
-        if not file_paths:
-            return
-        
-                  
-        dpg.delete_item("Landing Page", children_only=True)
-            
-        
-        if not dpg.does_item_exist("import_selector"):
-            dpg.delete_item("Landing Page", children_only=True)
-            show_home()
-        #     with dpg.window(label="Import Selector",tag="import", width=400, height=window_height):
-                        
-        #                 pass
-            
-
-        dpg.add_text("Import Selector", parent="import_selector")
-        dpg.add_separator(parent="import_selector")
-        for file_path in file_paths:
-                    
-                    data_manager_for_files = DataManager()
-                    
-                    try:
-                        data_manager_for_files.import_and_validate(file_path) 
-                        
-                    except(FileNotFoundError,ValueError)as e:
-                        
-                        dpg.add_text(f"    {Path(file_path).name} ❌ ",color=(255, 100, 100),parent="import_selector")
-                        continue
-                    data_manager_log[file_path] = data_manager_for_files
-                    dpg.add_checkbox(label=f"{Path(file_path).name} ✅",callback=DataManager.show_selected_window, user_data = (file_path, get_max_files,refresh_view), parent="import_selector")
-                   
-                                                
-                                        
-                
-    def show_selected_window(checkbox, check_status,user_data):
-            
-            file,get_max_files,refresh_view  =user_data
-            window_tag = f"window : {file}"
-            if check_status:
-                if not dpg.does_item_exist(window_tag):
-                    if(len(selected_files)>=get_max_files()):
-                        if not dpg.does_item_exist("max_error"):
-                         dpg.add_text("The maximum number of files was selected",color=(255, 100, 100),parent="import_selector",tag="max_error")
-                    else : 
-                         if dpg.does_item_exist("max_error"):
-                              dpg.delete_item("max_error")
-                         
-                         manager= data_manager_log[file]
-                         selected_files[file] = data_manager_log[file]
-                         df= manager.df
-                         with dpg.window(label=Path(file).name, tag=window_tag,  width=800,height=500, no_close=True):
-                                                
-                                                data_array = df.to_numpy()
-                                                with dpg.table(header_row=True,
-                                                               policy=dpg.mvTable_SizingFixedFit,
-                                                               resizable=True,
-                                                               scrollX=True, scrollY=True,
-                                                               borders_innerH=True, borders_outerH=True,
-                                                               borders_innerV=True, borders_outerV=True):
-                                                    for col in df.columns:
-                                                        dpg.add_table_column(label=str(col))
-                                                        
-                                                    # Add Rows and Cells
-                                                    for i in range(df.shape[0]):
-                                                        with dpg.table_row():
-                                                            for j in range(df.shape[1]):
-                                                                # Each cell is of type selectable, can also be text or input_text
-                                                                dpg.add_selectable(label=str(data_array[i, j]),
-                                                                                   callback=lambda:None)
-                else:
-                  dpg.show_item(window_tag)
-            else:
-                 
-                 selected_files.pop(file,None)
-                 if dpg.does_item_exist(window_tag):
-                      dpg.hide_item(window_tag)
-                 if dpg.does_item_exist("max_error"):
-                      dpg.delete_item("max_error")
-            refresh_view()
-        
+    
 
 def _project_root() -> Path:
     "Walks up the directory tree until it finds .git"
