@@ -111,8 +111,8 @@ Then delete the release on the Releases page (if one was created) and redo the s
 
 Open **Electrical → Monitor** to review nine sensor channels from an AiM CSV.
 The page provides a sensor table, whole-run traces, a selected-channel plot,
-gear findings and evidence, timing options, and optional HTML/JSON export.
-Only gear checks are implemented; other logged channels are marked **Not assessed**.
+findings and evidence, timing options, and optional HTML/JSON export.
+Checks cover gear, throttle, coolant temperature, and intake air temperature.
 
 Choose a CSV using the normal **Load Project** button, then open **Electrical →
 Monitor**. The monitor automatically uses that recording. **File → Load Project**

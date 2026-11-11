@@ -18,17 +18,65 @@ def suite(run, allow_estimated=False):
     return build_run_report(run, timing, gear)
 
 
+def add_channel(run, name, unit, readings):
+    run["channels"].append(name)
+    run["units"][name] = unit
+    for row, reading in zip(run["data"], readings, strict=True):
+        row[name] = str(reading)
+
+
 class RunReportTests(unittest.TestCase):
     def test_nine_channels_and_separate_brake_circuits(self):
         run = make_run([1] * 10 + [2] * 10)
+        units = {"throttle": "%", "iat": "°C", "coolant": "°C"}
         for definition in SENSORS[1:]:
-            run["channels"].append(definition["channel"])
-            run["units"][definition["channel"]] = "bar"
-            for row in run["data"]:
-                row[definition["channel"]] = "1"
+            add_channel(run, definition["channel"], units.get(definition["id"], "bar"), [1] * 20)
         report = suite(run)
-        self.assertEqual(report["summary"]["counts"], {"review": 0, "no_findings": 1, "not_assessed": 8, "not_logged": 0})
+        self.assertEqual(report["summary"]["counts"], {"review": 0, "no_findings": 4, "not_assessed": 5, "not_logged": 0})
         self.assertEqual([sensor["id"] for sensor in report["sensors"]][1:3], ["brake_front", "brake_rear"])
+
+    def test_throttle_flags_sustained_excursions_and_includes_activation(self):
+        readings = [-1, 101] * 3 + [-2] * 5 + [0] + [102] * 7 + [0] + [-2] * 6
+        run = make_run([1] * len(readings))
+        add_channel(run, "ECU THROTTLE", "%", readings)
+        throttle = suite(run)["sensors"][3]
+        self.assertEqual(throttle["status"], "review")
+        self.assertEqual([(item["location"]["start_sample"], item["location"]["activation_sample"])
+                          for item in throttle["findings"]], [(12, 17), (20, 25)])
+        self.assertEqual(throttle["findings"][0]["evidence"]["sample_window"][0]["raw_value"], "102")
+
+    def test_temperature_flags_one_short_spike_and_ignores_a_fall_or_exact_limit(self):
+        run = make_run([1] * 40)
+        add_channel(run, "ECU IAT", "°C", [20] * 10 + [25] + [20] * 9 + [26] + [20] * 19)
+        add_channel(run, "ECU ECT", "°C", [105] * 10 + [98] * 30)
+        report = suite(run)
+        iat, coolant = report["sensors"][4], report["sensors"][7]
+        self.assertEqual(iat["status"], "review")
+        self.assertEqual(len(iat["findings"]), 1)
+        self.assertEqual(iat["findings"][0]["location"]["activation_sample"], 20)
+        self.assertEqual(coolant["status"], "no_findings")
+
+    def test_screening_does_not_cross_invalid_readings_or_recording_gaps(self):
+        times = [i / 20 for i in range(15)] + [4 + i / 20 for i in range(16)]
+        run = make_run([1] * len(times), times=times)
+        add_channel(run, "ECU ECT", "°C", [72] * 15 + [79] * 6 + ["bad"] + [86] * 9)
+        add_channel(run, "ECU THROTTLE", "%", [0] * 12 + [102] * 6 + [0] * 13)
+        report = suite(run)
+        for sensor in (report["sensors"][3], report["sensors"][7]):
+            self.assertEqual(sensor["status"], "no_findings")
+            self.assertEqual(sensor["checks"][0]["assessment"], "partial")
+
+    def test_screening_checks_units_and_respects_estimated_timing_opt_in(self):
+        run = make_run([1] * 20, times=[""] * 20)
+        add_channel(run, "ECU THROTTLE", "V", [102] * 20)
+        add_channel(run, "ECU ECT", "°C", [72] * 10 + [79] * 10)
+        self.assertEqual(suite(run)["sensors"][7]["status"], "not_assessed")
+        report = suite(run, allow_estimated=True)
+        self.assertEqual(report["sensors"][3]["status"], "not_assessed")
+        self.assertIn("CSV unit: V", report["sensors"][3]["main_observation"])
+        findings = report["sensors"][7]["findings"]
+        self.assertEqual(len(findings), 1)
+        self.assertEqual(findings[0]["location"]["time_basis"], "estimated")
 
     def test_absent_channels_are_not_fabricated(self):
         report = suite(make_run([1] * 10 + [2] * 10))

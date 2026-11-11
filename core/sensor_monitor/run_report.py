@@ -1,7 +1,6 @@
 """Normalize sensor results for a common run overview, independent of its UI.
 
-Only gear has detection rules today. Descriptive statistics and numeric
-availability are observations; they never imply a sensor passed a check.
+Descriptive statistics and numeric availability describe the recorded data.
 """
 
 import copy
@@ -14,6 +13,7 @@ from uuid import uuid4
 
 from .sensor_catalog import SENSORS
 from .gear_timing import TOLERANCE
+from .signal_checks import SCREENED_SENSORS, evaluate_screening
 
 RESULT_LABELS = {"review": "Review", "no_findings": "No findings",
                  "not_assessed": "Not assessed", "not_logged": "Not logged"}
@@ -100,6 +100,8 @@ def build_run_report(run, timing, gear_report):
             sensor.update({"analysis": analysis, "checks": analysis["checks"],
                            "findings": analysis["findings"], "notes": analysis.get("notes", []),
                            "limitations": analysis["limitations"]})
+        elif sensor["id"] in SCREENED_SENSORS:
+            status, observation, scope = evaluate_screening(sensor, run, timing, gap_after)
         else:
             status, scope = "not_assessed", "Rules not implemented"
             observation = "Data available; sensor checks have not been implemented."
@@ -127,7 +129,8 @@ def build_run_report(run, timing, gear_report):
                    "gap_after_sample": gap_after, "note": note,
                    "first_to_last_span": axis[-1] - axis[0] if axis else None},
         "sensors": sensors,
-        "limitations": ["Only gear has detection rules. Other logged channels are not assessed.",
+        "limitations": ["Checks cover gear, throttle, coolant and intake air temperature.",
+                        "The throttle and temperature thresholds are provisional screening settings.",
                         "Statistics describe this recording and are not approved operating limits.", note],
     }
 

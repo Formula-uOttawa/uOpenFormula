@@ -10,25 +10,33 @@ def summarize_gear(run):
     missing = 0
     invalid = 0
     fractional = 0
+    changes = 0
+    previous_value = None
 
     for row in run["data"]:
         raw_value = row["Gear Position"].strip()
 
         if raw_value == "":
             missing += 1
+            previous_value = None
             continue
 
         try:
             value = float(raw_value)
         except ValueError:
             invalid += 1
+            previous_value = None
             continue
 
         # Reject special numeric values such as NaN and infinity.
         if not math.isfinite(value):
             invalid += 1
+            previous_value = None
             continue
 
+        if previous_value is not None and value != previous_value:
+            changes += 1
+        previous_value = value
         counts[value] += 1
 
         if not value.is_integer():
@@ -41,54 +49,10 @@ def summarize_gear(run):
         "missing_samples": missing,
         "invalid_samples": invalid,
         "fractional_samples": fractional,
+        "raw_value_changes": changes,
         "counts": dict(sorted(counts.items())),
     }
 
-def inspect_gear_sequence(run):
-    if "Gear Position" not in run["channels"]:
-        return {"available": False}
-
-    changes = []
-    fractional_readings = []
-
-    previous_value = None
-    previous_index = None
-
-    for sample_index, row in enumerate(run["data"]):
-        try:
-            value = float(row["Gear Position"])
-        except ValueError:
-            previous_value = None
-            previous_index = None
-            continue
-
-        if not math.isfinite(value):
-            previous_value = None
-            previous_index = None
-            continue
-
-        if not value.is_integer():
-            fractional_readings.append({
-                "sample_index": sample_index,
-                "value": value,
-            })
-
-        if previous_value is not None and value != previous_value:
-            changes.append({
-                "from_sample": previous_index,
-                "to_sample": sample_index,
-                "from_value": previous_value,
-                "to_value": value,
-            })
-
-        previous_value = value
-        previous_index = sample_index
-
-    return {
-        "available": True,
-        "changes": changes,
-        "fractional_readings": fractional_readings,
-    }
 
 def find_gear_observation_intervals(run):
     if "Gear Position" not in run["channels"]:

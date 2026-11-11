@@ -206,7 +206,7 @@ class MonitorView:
         self._text(f"{counts['review']} review | {counts['no_findings']} no findings | "
                    f"{counts['not_assessed']} not assessed | {counts['not_logged']} not logged",
                    wrap=self._wrap_width())
-        self._text("Only gear has checks. Select a sensor for details.", wrap=self._wrap_width())
+        self._text("Select a sensor for details.", wrap=self._wrap_width())
         with dpg.table(tag=self.TABLE, header_row=True, width=-1, height=-1,
                        scrollY=True, freeze_rows=1, row_background=True,
                        policy=dpg.mvTable_SizingStretchProp, borders_innerH=True):
@@ -217,9 +217,9 @@ class MonitorView:
                     with dpg.table_cell():
                         dpg.add_selectable(label=sensor["name"], user_data=sensor["id"],
                                            callback=self._select_sensor)
-                        self._plot(sensor, f"sensor_monitor_mini_{sensor['id']}", miniature=True)
-                        if sensor["logged"] and sensor["data_summary"]["numeric_samples"]:
-                            low, high = value_limits(self.report, sensor)
+                        limits = self._plot(sensor, f"sensor_monitor_mini_{sensor['id']}", miniature=True)
+                        if limits is not None:
+                            low, high = limits
                             self._text(f"{self._number(low)} - {self._number(high)} {sensor['unit']}", column=0)
                     with dpg.table_cell():
                         self._text(sensor["status_label"], color=self.COLORS[sensor["status"]])
@@ -321,6 +321,7 @@ class MonitorView:
         if not miniature:
             self._text("Raw readings; gaps stay empty. Drag to pan, scroll to zoom. Finding markers show activation.",
                          color=(167, 179, 194), wrap=self._wrap_width())
+        return low, high
 
     def _render_detail(self):
         dpg.delete_item(self.DETAIL, children_only=True)
@@ -336,6 +337,9 @@ class MonitorView:
             self._text(sensor["main_observation"], wrap=self._wrap_width())
             if not sensor["logged"]:
                 return
+            for check in sensor["checks"]:
+                if "criterion" in check:
+                    self._text(check["criterion"], wrap=self._wrap_width())
             self._text(f"{sensor['channel']} | {sensor['unit'] or 'Unit unavailable'}",
                        color=(167, 179, 194), wrap=self._wrap_width())
             timing = self.report["timing"]
@@ -343,32 +347,33 @@ class MonitorView:
                        f"{self._number(timing['axis'][0])} - {self._number(timing['axis'][-1])} {timing['unit']}",
                        wrap=self._wrap_width())
             findings = sensor["findings"]
+            finding = findings[self.finding_index] if findings else None
             self._finding_labels = [f"{item['id']}: {item['title']}" for item in findings]
             if len(findings) > 1:
                 dpg.add_combo(self._finding_labels, default_value=self._finding_labels[self.finding_index],
                               tag="sensor_monitor_finding_selector", label="Finding",
                               width=max(200, self._wrap_width() - 80), callback=self._select_finding)
-            if findings and findings[self.finding_index]["scope"] != "whole_recording":
+            if finding and finding["scope"] != "whole_recording":
                 with dpg.group(horizontal=True):
                     dpg.add_button(label="Whole run", callback=self._set_focus, user_data=False)
                     dpg.add_button(label="Finding context", callback=self._set_focus, user_data=True)
+            if finding:
+                self._text(finding["message"], wrap=self._wrap_width())
             self._plot(sensor, "sensor_monitor_selected_plot")
-            if findings:
-                item = findings[self.finding_index]
-                self._text(f"{item['id']} | {item['title']}", color=(245, 192, 92), wrap=self._wrap_width())
-                self._text(item["message"], wrap=self._wrap_width())
-                self._text(self._location_text(item["location"]), wrap=self._wrap_width())
-                self._text(f"Next: {item['suggested_action']}", wrap=self._wrap_width())
+            if finding:
+                self._text(f"{finding['id']} | {finding['title']}", color=(245, 192, 92), wrap=self._wrap_width())
+                self._text(self._location_text(finding["location"]), wrap=self._wrap_width())
+                self._text(f"Next: {finding['suggested_action']}", wrap=self._wrap_width())
                 with dpg.collapsing_header(label="Finding evidence"):
-                    self._text(f"Rule {item['rule_version']} ({item['rule_status']}) | {item['category']}", wrap=self._wrap_width())
+                    self._text(f"Rule {finding['rule_version']} ({finding['rule_status']}) | {finding['category']}", wrap=self._wrap_width())
                     with dpg.table(header_row=True, resizable=True, policy=dpg.mvTable_SizingStretchProp):
-                        for label in ["Sample", "Time (s)", "Raw gear reading"]:
+                        for label in ["Sample", "Time (s)", "Raw reading"]:
                             dpg.add_table_column(label=label)
-                        for sample in item["evidence"]["sample_window"]:
+                        for sample in finding["evidence"]["sample_window"]:
                             with dpg.table_row():
                                 self._text(str(sample["sample_index"]))
                                 self._text(self._number(sample["seconds"]))
-                                self._text(str(sample["raw_gear"]))
+                                self._text(str(sample["raw_gear"] if sensor["id"] == "gear" else sample["raw_value"]))
             with dpg.collapsing_header(label="Statistics and check details"):
                 data = sensor["data_summary"]
                 self._text(f"CSV channel: {sensor['channel']} | {sensor['unit']}", wrap=self._wrap_width())
@@ -380,15 +385,16 @@ class MonitorView:
                     rules = analysis["analysis_settings"]["rules"]
                     self._text(f"Gear rule version: {rules['version']} ({rules['status']})", wrap=self._wrap_width())
                     self._text("Confirmed gears: " + (", ".join(gear_label(code) for code in analysis["data_summary"]["confirmed_gears"]) or "None"), wrap=self._wrap_width())
-                    for check in sensor["checks"]:
-                        dpg.add_separator()
-                        self._text(f"{check['name']} | {check['assessment']} | {check['outcome']}", wrap=self._wrap_width())
+                for check in sensor["checks"]:
+                    dpg.add_separator()
+                    self._text(f"{check['name']} | {check['assessment']} | {check['outcome']}", wrap=self._wrap_width())
+                    if check["message"] not in (check.get("criterion"), sensor["main_observation"]):
                         self._text(check["message"], wrap=self._wrap_width())
-                    for note in sensor["notes"]:
-                        dpg.add_separator()
-                        self._text(f"{note['id']}: {note['title']}", wrap=self._wrap_width())
-                        self._text(note["message"], wrap=self._wrap_width())
-                        self._text(self._location_text(note["location"]), wrap=self._wrap_width())
+                for note in sensor["notes"]:
+                    dpg.add_separator()
+                    self._text(f"{note['id']}: {note['title']}", wrap=self._wrap_width())
+                    self._text(note["message"], wrap=self._wrap_width())
+                    self._text(self._location_text(note["location"]), wrap=self._wrap_width())
                 for limitation in sensor["limitations"]:
                     self._text(limitation, bullet=True, wrap=self._wrap_width())
 

@@ -18,6 +18,7 @@ from core.sensor_monitor.run_report import build_run_report
 from core.sensor_monitor.service import analyze_loaded_recording, analyze_run
 from core.sensor_monitor.timing import build_timing
 from tests.sensor_monitor.test_gear_report import make_run
+from tests.sensor_monitor.test_run_report import add_channel
 from ui.home_page import HomePage, VIEW_MAP
 from ui.views.elec_monitor import MonitorView
 
@@ -30,8 +31,10 @@ def stable_result(value):
     return value
 
 
-def write_recording(directory, values, times=None):
+def write_recording(directory, values, times=None, signals=()):
     run = make_run(values, times=times)
+    for name, unit, readings in signals:
+        add_channel(run, name, unit, readings)
     path = Path(directory) / 'recording.csv'
     with path.open('w', newline='') as stream:
         writer = csv.writer(stream, quoting=csv.QUOTE_ALL)
@@ -83,10 +86,15 @@ class SensorServiceTests(unittest.TestCase):
         self.assertEqual(trace_segments(report, sensor), [([0], [1]), ([.1], [2]), ([4, 4.05], [3, 4])])
 
     def test_brake_scales_match_only_for_matching_units(self):
-        front = {'id': 'brake_front', 'logged': True, 'unit': 'bar', 'values': [2, 3]}
-        rear = {'id': 'brake_rear', 'logged': True, 'unit': 'bar', 'values': [5, 9]}
-        report = {'sensors': [front, rear]}
-        self.assertEqual(value_limits(report, front), value_limits(report, rear))
+        run = make_run([1, 1])
+        add_channel(run, 'Front Brake Pres', 'bar', [2, 3])
+        add_channel(run, 'Rear Brake Pres', 'bar', [5, 9])
+        report = analyze_run(run)
+        front, rear = report['sensors'][1:3]
+        low, high = value_limits(report, front)
+        self.assertAlmostEqual(low, -.63)
+        self.assertAlmostEqual(high, 9.63)
+        self.assertEqual((low, high), value_limits(report, rear))
         rear['unit'] = 'psi'
         self.assertNotEqual(value_limits(report, front), value_limits(report, rear))
 
@@ -153,6 +161,17 @@ class SensorMonitorViewTests(unittest.TestCase):
         self.assertFalse(dpg.does_item_exist('sensor_monitor_selected_plot'))
         self.view._select_sensor(None, None, 'gear')
         self.assertTrue(dpg.does_item_exist('sensor_monitor_selected_plot'))
+
+    def test_temperature_finding_shows_source_readings_and_can_focus_plot(self):
+        write_recording(self.directory.name, [1] * 24,
+                        signals=[('ECU IAT', '°C', [20] * 12 + ['27.250'] + [20] * 11)])
+        self.open_recording()
+        self.view._select_sensor(None, None, 'iat')
+        self.view._set_focus(None, None, True)
+        text = [dpg.get_value(item) for item in dpg.get_all_items()
+                if dpg.get_item_type(item) == 'mvAppItemType::mvText']
+        self.assertIn('27.250', text)
+        self.assertIn('Abrupt temperature rise | complete | review', text)
 
     def test_ui_options_keep_backend_timing_and_run_context_semantics(self):
         write_recording(self.directory.name, [0] * 30, times=[''] * 30)

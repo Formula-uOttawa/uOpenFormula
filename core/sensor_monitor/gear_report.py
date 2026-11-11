@@ -5,9 +5,8 @@ from datetime import datetime, timezone
 import hashlib
 import json
 from pathlib import Path
-from uuid import uuid4
 
-from .gear_analyzer import summarize_gear, inspect_gear_sequence, find_gear_observation_intervals
+from .gear_analyzer import summarize_gear, find_gear_observation_intervals
 from .gear_run import evaluate_no_shift_run
 from .gear_quality import evaluate_gear_quality
 from .gear_states import build_gear_states
@@ -75,7 +74,6 @@ def analyze_gear(run, timing, rules, shifts_expected=None):
     whole_run = evaluate_no_shift_run(states, rules, shifts_expected=shifts_expected, timing=timing, run=run)
     observations = find_gear_observation_intervals(run)
     observations.setdefault("intervals", [])
-    sequence = inspect_gear_sequence(run)
     total = len(run["data"])
 
     checks = [{
@@ -163,7 +161,8 @@ def analyze_gear(run, timing, rules, shifts_expected=None):
         status, summary = "no_issues_detected", "No issues detected by completed checks"
 
     try:
-        checksum = hashlib.sha256(Path(run["source"]).read_bytes()).hexdigest()
+        with Path(run["source"]).open("rb") as source_file:
+            checksum = hashlib.file_digest(source_file, "sha256").hexdigest()
     except OSError:
         checksum = None
     distribution = [{"value": value, "samples": count, "share": count / statistics["numeric_samples"]}
@@ -200,7 +199,7 @@ def analyze_gear(run, timing, rules, shifts_expected=None):
             "confirmed_reading_coverage": whole_run.get("confirmed_coverage"),
             "brief_unconfirmed_samples": whole_run.get("unconfirmed_samples", 0),
             "unresolved_samples": whole_run.get("unresolved_samples", 0),
-            "raw_value_changes": len(sequence.get("changes", [])),
+            "raw_value_changes": statistics.get("raw_value_changes", 0),
         },
         "checks": checks, "findings": findings, "notes": notes, "limitations": limitations,
         "observations": {
@@ -251,15 +250,3 @@ def format_gear_report(report, detailed=False):
         lines.extend(f"{item['value']:g}: {item['samples']} samples ({item['share']:.2%})" for item in data["distribution"])
         lines.append("\nSETTINGS\n" + json.dumps(report["analysis_settings"], indent=2))
     return "\n".join(lines)
-
-
-def save_gear_report(report, directory=None):
-    text = json.dumps(report, ensure_ascii=False, allow_nan=False, indent=2)
-    source = Path(report["source"]["path"])
-    directory = Path(directory) if directory is not None else source.parent / "reports"
-    directory.mkdir(parents=True, exist_ok=True)
-    stamp = datetime.now(timezone.utc).strftime("%Y%m%dT%H%M%S%fZ")
-    path = directory / f"{source.stem}.gear.{stamp}.{uuid4().hex[:8]}.json"
-    with path.open("x", encoding="utf-8") as file:
-        file.write(text + "\n")
-    return path.resolve()

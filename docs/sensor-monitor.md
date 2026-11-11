@@ -65,8 +65,15 @@ The original version 0.5 settings remain in
 codes 1–6 are preserved. Persistent unusable data, sustained large recorded
 changes, and whole-run variation checks retain the original conditions. See
 [the imported gear rule specification](../core/sensor_monitor/GEAR_RULES.md).
-The other eight channels have descriptive statistics and plots, without new
-sensor-specific detection rules.
+
+Throttle readings below −1% or above 101% for at least 0.25 s are flagged
+for review. Coolant and intake air temperature each flag a rise greater than
+5 °C within 0.5 s. These trial checks use the CSV's percentage or Celsius
+units and recorded time, or estimated time when enabled. Missing and invalid
+readings and detected time gaps break the checks. Select a finding to see the
+original readings. Sensor detail shows the rule above the chart, including
+when the check runs without a finding. Coolant operating warnings require
+team-approved limits.
 
 ## Architecture
 
@@ -74,7 +81,7 @@ sensor-specific detection rules.
 Tkinter file picker -> shared DataManager -> project CSV path
     -> core.sensor_monitor.csv_loader (original raw readings)
     -> service.analyze_run
-        -> timing + gear analysis + shared run report
+        -> timing + gear and signal checks + shared run report
     -> ui.views.elec_monitor.MonitorView
         -> sensor table, traces, findings, check details
 ```
@@ -132,7 +139,7 @@ macOS, cancellation, automatic Monitor population, missing oil channels, repeat
 loads, and failure recovery. Real-log smoke checks also load 15.csv and
 the team's faran_a_3731.csv through the shared project-loading path.
 
-Four monitor layout checks bring the suite to 153 tests. They cover the original
+Four monitor layout checks cover the original
 viewport dimensions, compact overview, navigation to sensor details, preservation
 of the selected tab during reanalysis, and panel-local sizing without changing
 the surrounding application or replacing plot objects.

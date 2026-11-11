@@ -1,10 +1,8 @@
 import copy
 import json
-from pathlib import Path
-import tempfile
 import unittest
 
-from core.sensor_monitor.gear_report import analyze_gear, format_gear_report, save_gear_report, _evidence_sample_count
+from core.sensor_monitor.gear_report import analyze_gear, format_gear_report, _evidence_sample_count
 from core.sensor_monitor.timing import build_timing
 from core.sensor_monitor.gear_rules import load_gear_rules
 
@@ -126,15 +124,6 @@ class CombinedReportTests(unittest.TestCase):
         findings = [{"location": {"start_sample": start, "end_sample": end}}
                     for start, end in ((2, 5), (4, 8), (10, 10))]
         self.assertEqual(_evidence_sample_count(findings), 8)
-
-    def test_saved_json_matches_report_and_never_overwrites_previous_run(self):
-        run, report = make_report([2] * 10 + [4] * 10)
-        with tempfile.TemporaryDirectory() as directory:
-            first = save_gear_report(report, directory)
-            second = save_gear_report(report, directory)
-            self.assertNotEqual(first, second)
-            self.assertEqual(json.loads(first.read_text()), report)
-            self.assertEqual(json.loads(second.read_text()), report)
 
     def test_formatter_has_consistent_ids_counts_and_optional_details(self):
         run, report = make_report([1] * 11 + [4] * 11)
