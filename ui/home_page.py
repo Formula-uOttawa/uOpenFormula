@@ -7,6 +7,9 @@ from treelib import Tree
 import pkgutil
 import ui.views as views_package
 import importlib
+from sys import executable  # To run subprocess
+from subprocess import check_output
+import platform
 
 
 def _load_view_map():
@@ -285,15 +288,32 @@ class HomePage:
         Select a file using native operating system UI.
         """
 
+        if platform.system() == "Windows":
+            self.file_path = self.windows_open_file()
+
+        elif platform.system() == "Darwin":
+            self.file_path = self.mac_open_file()
+
+        elif platform.system() == "Linux":
+            print("Running on Linux")
+
+        self.df = self.importer.import_and_validate(self.file_path)
+
+
+    def windows_open_file(self):
         #TODO: move this to the new data manager view
         root = tk.Tk()
         root.withdraw()
-        self.file_path = filedialog.askopenfilename()
+        file_path = filedialog.askopenfilename()
         root.destroy() # DO NOT DELETE EVER
+                
+        return file_path
         
-        # This runs load() + validations and returns the DataFrame
-        # TODO: this makes two copies of df? If so investigate making this not a hard copy.
-        self.df = self.importer.import_and_validate(self.file_path)
+
+
+    def mac_open_file():
+        file = check_output([executable, "get_file.py"])  
+        print(f"{file=}")
 
     
     def show_home(self):
