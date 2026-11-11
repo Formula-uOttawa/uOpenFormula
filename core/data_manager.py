@@ -13,7 +13,7 @@ class DataManager:
     """
 
 
-    def __init__(self, update_brake_temps, play_brake_temps, set_brake_temp_step):
+    def __init__(self, update_brake_temps, play_brake_temps, set_brake_temp_step, generate_disc_function):
         self.path = ""              # Path to the CSV file
         self.df = None              # DataFrame to hold the loaded data
         self.df_excl_time = None    # DataFrame excluding 'Time' column
@@ -23,6 +23,7 @@ class DataManager:
         self.update_brake_temps = update_brake_temps
         self.play_brake_temps = play_brake_temps
         self.set_brake_temp_step = set_brake_temp_step
+        self.generate_disc_function = generate_disc_function
 
 
     def set_brake_temps(self, temps):
@@ -31,6 +32,8 @@ class DataManager:
 
     def set_brake_temp_step(self, step):
         self.set_brake_temp_step(step)
+
+
 
     
     def import_and_validate(self, path):

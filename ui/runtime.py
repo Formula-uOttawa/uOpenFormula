@@ -7,7 +7,7 @@ class Runtime:
 
 
     def __init__(self):
-        self.importer = DataManager(self.update_break_temp, self.play_brake_temps, self.set_brake_temp_step)
+        self.importer = DataManager(self.update_break_temp, self.play_brake_temps, self.set_brake_temp_step, self.set_brake_texture)
         self.home_page = HomePage(self.importer)
         self.render_manager = rm()
         self.boot()
@@ -65,9 +65,15 @@ class Runtime:
 
     def play_brake_temps(self, flag):
         self.render_manager.play_brake_temps = flag
+        if flag:
+            dpg.set_value("Brake Disc View", "Brake Disc View (Playing)")
+        else:
+             dpg.set_value("Brake Disc View", "Brake Disc View (Paused)")
 
 
     def set_brake_temp_step(self, playrate):
 
         self.render_manager.update_interval = (1/(20 * playrate))
 
+    def set_brake_texture(self, texture):
+        self.render_manager.generate_brake_texture = texture
