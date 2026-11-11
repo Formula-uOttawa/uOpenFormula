@@ -494,6 +494,14 @@ def show_selected_window(checkbox, check_status,user_data):
                   selected_files[file] = data_manager_log[file]
                   update_file_checkboxes(get_max_files)
                   dpg.show_item(window_tag)
+                  if check_status and len(selected_files) == get_max_files(): #if max files selecetd reached
+                      if dpg.does_item_exist("max_files_popup"): 
+                          dpg.delete_item("max_files_popup")
+                      with dpg.window(label="Maximum files reached",tag="max_files_popup",modal=True,autosize=True,no_resize=True):
+                            dpg.add_text(f"You have selected the maximum of {get_max_files()} files.")
+                            dpg.add_text("You should unselect a file before adding one")
+                            dpg.add_button(label="OK",callback=lambda: dpg.delete_item("max_files_popup")) #pop up error disappears after clicking ok
+                  
             else:
                  
                  selected_files.pop(file,None)
