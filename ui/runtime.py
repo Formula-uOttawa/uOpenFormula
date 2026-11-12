@@ -27,7 +27,8 @@ class Runtime:
 
                     heading_font = dpg.add_font(
                         "Assets/Fonts/Oxanium-SemiBold.ttf",
-                        18
+                        28,
+                        tag = "Heading_font",
                     )
 
                     menu_font = dpg.add_font(

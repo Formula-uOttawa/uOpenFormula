@@ -2,14 +2,13 @@ import importlib
 import pkgutil
 import platform
 import tkinter as tk
+import dearpygui.dearpygui as dpg
+import ui.views as views_package
+from random import randint
 from subprocess import check_output
 from sys import executable  # To run subprocess
 from tkinter import filedialog
-
-import dearpygui.dearpygui as dpg
 from treelib import Tree
-
-import ui.views as views_package
 from ui.utils.load_texture import load_texture
 
 
@@ -48,18 +47,19 @@ class HomePage:
         # Active nav button highlighted
         with dpg.theme() as self.theme_nav_active:
             with dpg.theme_component(dpg.mvButton):
-                dpg.add_theme_color(dpg.mvThemeCol_Button, (80, 130, 160, 255))
-                dpg.add_theme_color(dpg.mvThemeCol_ButtonHovered, (90, 145, 175, 255))
-                dpg.add_theme_color(dpg.mvThemeCol_ButtonActive, (70, 115, 145, 255))
-                dpg.add_theme_style(dpg.mvStyleVar_FrameRounding, 10.0)
+                dpg.add_theme_color(dpg.mvThemeCol_Button, (16, 91, 136))
+                dpg.add_theme_color(dpg.mvThemeCol_ButtonHovered, (22, 110, 160))
+                dpg.add_theme_color(dpg.mvThemeCol_ButtonActive, (12, 75, 115))
+                dpg.add_theme_style(dpg.mvStyleVar_FrameRounding, 6.0)
 
-                # Inactive nav button default
+
+        # Inactive nav button default
         with dpg.theme() as self.theme_nav_inactive:
             with dpg.theme_component(dpg.mvButton):
-                dpg.add_theme_color(dpg.mvThemeCol_Button, (50, 50, 50, 255))
-                dpg.add_theme_color(dpg.mvThemeCol_ButtonHovered, (70, 70, 70, 255))
-                dpg.add_theme_color(dpg.mvThemeCol_ButtonActive, (90, 90, 90, 255))
-                dpg.add_theme_style(dpg.mvStyleVar_FrameRounding, 10.0)
+                dpg.add_theme_color(dpg.mvThemeCol_Button, (18, 22, 45))
+                dpg.add_theme_color(dpg.mvThemeCol_ButtonHovered, (25, 30, 60))
+                dpg.add_theme_color(dpg.mvThemeCol_ButtonActive, (20, 25, 55))
+                dpg.add_theme_style(dpg.mvStyleVar_FrameRounding, 6.0)
 
     def _build_nav_tree(self):
         self.nav = Tree()
@@ -141,6 +141,9 @@ class HomePage:
 
     def _switch_main_view(self, view_key):
         """Show only the window matching view_key, hide all others."""
+
+        dpg.configure_item("home_view", show=(view_key == "home"))
+
         for win in self.SWAPPABLE_WINDOWS:
             if dpg.does_item_exist(win):
                 dpg.configure_item(win, show=(win == view_key))
@@ -165,6 +168,7 @@ class HomePage:
                 parent="navbar",
             )
             dpg.add_separator(parent="navbar")
+        
 
         for child in children:
             dpg.add_button(
@@ -181,7 +185,7 @@ class HomePage:
 
         viewport_width = dpg.get_viewport_width()
         viewport_height = dpg.get_viewport_height()
-        vertical_padding = (viewport_height - 300) / 2
+        vertical_padding = (viewport_height - 360) / 2
 
         with dpg.window(tag="Landing Page", no_move=True, no_resize=True, pos=(0, 0)):
             # This table houses the logo, new project, and load project buttons at the start of the program.
@@ -204,7 +208,7 @@ class HomePage:
                 with dpg.table_row():
                     dpg.add_spacer()
                     dpg.add_image(
-                        load_texture("assets/formula_logo.png"), height=150, width=699
+                        load_texture("assets/formula_logo.png"), height=233, width=699
                     )
 
                 with dpg.table_row():
@@ -250,7 +254,7 @@ class HomePage:
                         dpg.add_spacer(width=63)
 
                 with dpg.table_row():
-                    dpg.add_spacer(height=(dpg.get_viewport_height() - 510))
+                    dpg.add_spacer(height=(dpg.get_viewport_height() - 560))
 
                 with dpg.table_row():
                     dpg.add_text(
@@ -301,7 +305,7 @@ class HomePage:
 
     def mac_open_file(self):
         file = check_output([executable, "./ui/get_file.py"])
-        print(f"{file=}")
+        return(f"{file=}")
 
     def show_home(self):
         self._build_nav_tree()
@@ -321,15 +325,17 @@ class HomePage:
         ):
             self._build_sidebar_for("home")
 
+        
+        self.make_home_view()
+
         dpg.bind_item_theme("navbar", "cyan_border_theme")
+        dpg.bind_item_theme("home_view", "cyan_border_theme")
 
         # Create all view windows (hidden by default except first)
         for node in self.nav.all_nodes():
             if node.identifier == "home":
                 continue
-            # First child of home is the default
-            default_view = self.nav.children("home")[0].identifier
-            is_first = node.identifier == default_view
+            
             with dpg.window(
                 label=node.tag,
                 tag=node.identifier,
@@ -340,7 +346,7 @@ class HomePage:
                 no_move=True,
                 no_resize=True,
                 no_collapse=True,
-                show=is_first,
+                show=False,
             ):
                 dpg.bind_item_theme(node.identifier, "cyan_border_theme")
                 if node.identifier in VIEW_MAP:
@@ -350,3 +356,104 @@ class HomePage:
                 else:
                     # Parent node with no dedicated view — just a placeholder
                     dpg.add_text(f"{node.tag}: select a sub-view from the sidebar.")
+
+    def get_motm(self):
+        """
+        generates random message of the month
+
+        """        
+        
+        messages = [
+            "Wagwan Famalam - Alex",
+            "It Fits In CAD!",
+            "Shirley It'll Work!",
+            "If You Find Something Wrong,\n It's Not A Bug, It's A Feature",
+            "Powered By Caffeine and Deadlines",
+            "Designed By Sleep Deprived Students",
+            "Now With 20% Fewer Crashes!",
+            "Run With Hopes And Dreams",
+            "Built Different. Runs Slower",
+            "Optimized For Developer Happiness",
+            "Endurance? Never Heard Of Her",
+            "Downforce? Never Heard Of Her",
+            "Ayham Approved This... Hopefully",
+            "Made Possible By Sleep Deprivation",
+            "Our CAD Model Is Faster",
+            "Manufacturing tolerances\n are suggestions - Someone",
+            "The Car Is Almost Finished... Hopefully",
+            "Trust The Data. Question The Sensor.",
+            "We Don't Know How This Is Working",
+            "It's Not Noise, It's Character",
+            "Built By Students. Lower Your Expectations",
+            "Our Sleep Schedules Are Theoretical",
+            "The Car Has Better Attendance Than Us",
+            "Please Return The 10 mm Socket",
+            "Someone Stole The Torque Wrench Again",
+            "Our Most Reliable Component Is the Group Chat",
+            "The Car Isn't Late. The Calendar Is Wrong",
+            "Hello, Future Engineer!",
+            "Not Suitable For Underwater Use",
+            "We Know What You Did In SolidWorks",
+            "Plot Twist: It's Another Plot",
+            "Speed And Powwerrrrrr!",
+            "CLARKSOOOON!",
+            "Ambitious, But Rubbish",
+            "GP2 engine! GP2!",
+            "Fernando is faster than you",
+            "The Seat is Full Of Water",
+            "Loading at Ferrari strategy speed",
+            "Try a Kalman Filter - PhD Knowledge",
+        ]
+        
+        return(messages[randint(0, len(messages)-1)])
+
+    def make_home_view(self):
+        with dpg.window(
+                    label="Welcome to uOpenFormula",
+                    tag="home_view",
+                    pos=[201, 27],
+                    width=dpg.get_viewport_width() - 219,
+                    height=dpg.get_viewport_height() - 67,
+                    no_close=True,
+                    no_move=True,
+                    no_resize=True,
+                    no_collapse=True,
+                ):  
+                    message = self.get_motm()
+
+                    dpg.add_image( load_texture("assets/formula_logo.png"), width=450, height=150, tag="home_logo")
+
+                    dpg.add_text(message, tag="home_message")
+                    dpg.bind_item_font("home_message", "Heading_font")
+
+                    window_width, window_height = dpg.get_item_rect_size("home_view")
+
+
+                    # Get the actual sizes
+                    
+                    text_width, text_height = dpg.get_text_size(message)
+                    text_width *= 2
+                    text_height *= 2
+
+                    # Space between logo and text
+                    gap = 50
+
+                    # Total height of both elements
+                    total_height = 150 + gap + text_height
+
+                    # Center the entire layout vertically
+                    start_y = (window_height - total_height - 400) / 2
+
+                    # Center logo horizontally
+                    logo_x = (window_width - 470) / 2
+
+                    # Center text horizontally
+                    text_x = (window_width - text_width - 20) / 2
+
+                    # Position both elements
+                    dpg.set_item_pos("home_logo", [logo_x, start_y])
+
+                    dpg.set_item_pos(
+                        "home_message",
+                        [text_x, start_y + 150 + gap]
+                    )

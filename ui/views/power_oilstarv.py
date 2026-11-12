@@ -44,7 +44,6 @@ class OilStarvationView:
         dpg.show_item(showing_graph)
         
 
-
     def build(self, parent_tag):
         """Called once to populate the window."""
 
@@ -87,7 +86,6 @@ class OilStarvationView:
         dpg.configure_item("Oil Pressure High", label=f"Oil Pressure High ({self.high_percent:.1f}%)")
 
 
-
     def reset_oil_ranges(self):
         """
         Changes the Upper and Lower limit of allowed oil pressure back to default values.
@@ -115,6 +113,7 @@ class OilStarvationView:
             )
 
         self.reset_oil_graphs()  # Updates the graphs.
+
        
     def update_graphs(self):
         """
@@ -131,6 +130,7 @@ class OilStarvationView:
             self.oil_operating_upper[i] = dpg.get_value(f'upper_{i}')
 
         self.reset_oil_graphs()  # Updates graphs with new limits.
+
         
     def classify_oil_values(self):
         """
@@ -253,8 +253,8 @@ class OilStarvationView:
             #Creates drop down to change pressure limits.
             with dpg.menu(tag="Change Safe Pressure Range", label="Change Safe Pressure Range"):  
                 with dpg.group(horizontal=True):
-                    dpg.add_button(label="Update", callback=lambda: self.update_graphs(), width = 250)
-                    dpg.add_button(label="Reset", callback=lambda: self.reset_oil_ranges(), width = 250)
+                    dpg.add_button(label="Update", callback=lambda: self.update_graphs(), width = 185)
+                    dpg.add_button(label="Reset", callback=lambda: self.reset_oil_ranges(), width = 185)
 
                 for i in range(len(self.oil_operating_RPM)):
 
@@ -264,14 +264,20 @@ class OilStarvationView:
                         dpg.add_input_float(
                             tag = f"lower_{i}",
                             label = "Lower",
+                            width = 140,
                             default_value = self.oil_operating_lower[i],
+                            min_value=0,
+                            min_clamped=True,
                             step = 1.0
                         )
 
                         dpg.add_input_float(
                             tag = f"upper_{i}",
                             label = "Upper",
+                            width = 140,
                             default_value = self.oil_operating_upper[i],
+                            min_value=0,
+                            min_clamped=True,
                             step = 1.0
                         )
 
@@ -279,8 +285,8 @@ class OilStarvationView:
 
                 
         
-        with dpg.child_window(tag="Rpm & Oil Pressure graph", show=False):
-            with dpg.plot(label="Rpm & Oil Pressure", height=800, width=dpg.get_viewport_width() - 250, crosshairs=True):
+        with dpg.child_window(tag="Rpm & Oil Pressure graph", show=False, border=False):
+            with dpg.plot(label="Rpm & Oil Pressure", height=793, width=dpg.get_viewport_width() - 235, crosshairs=True):
                     
                 dpg.add_plot_legend()
         
@@ -294,9 +300,9 @@ class OilStarvationView:
                 dpg.add_line_series(x=self.time, y=self.pressure_excess, tag = "Excess Oil Pressure", label=f"Excess Oil Pressure ({self.avg_excess:.1f})", parent="y_axis_rpm_and_oil")
                 dpg.add_line_series(x=self.time, y=self.rad_temp, label="Temp (C) X 100", parent="y_axis_rpm_and_oil")
                 
-        with dpg.child_window(tag="G-forces & Oil Pressure graph", show=False):
+        with dpg.child_window(tag="G-forces & Oil Pressure graph", show=False, border=False):
                             
-            with dpg.plot(label="G-forces & Oil Pressure", height=800, width=dpg.get_viewport_width() - 250, crosshairs=True):
+            with dpg.plot(label="G-forces & Oil Pressure", height=793, width=dpg.get_viewport_width() - 235, crosshairs=True):
                             
                 dpg.add_plot_legend()
                 
@@ -307,8 +313,8 @@ class OilStarvationView:
                 dpg.add_line_series(x=self.time, y=self.long_g_scaled, label="longitudinal G (Forward/Backward) X 10", parent="y_axis_Gforce_and_oil")
                 dpg.add_line_series(x=self.time, y=self.lat_g_scaled, label="lateral G (Left/Right) X 10", parent="y_axis_Gforce_and_oil")
         
-        with dpg.child_window(tag="G-forces & Low Oil Pressure plot", show=False):
-            with dpg.plot(label="G-forces & Low Oil Pressure Events", height=800, width=dpg.get_viewport_width() - 250, crosshairs=True):
+        with dpg.child_window(tag="G-forces & Low Oil Pressure plot", show=False, border=False):
+            with dpg.plot(label="G-forces & Low Oil Pressure Events", height=793, width=dpg.get_viewport_width() - 235, crosshairs=True):
                             
                 dpg.add_plot_legend()
                 
@@ -338,8 +344,8 @@ class OilStarvationView:
                                        )             
                    
         
-        with dpg.child_window(tag="Rpm vs Oil Pressure plot", show=False):
-            with dpg.plot(label="Rpm vs Oil Pressure", height=800, width=dpg.get_viewport_width() - 250, crosshairs=True):
+        with dpg.child_window(tag="Rpm vs Oil Pressure plot", show=False, border = False):
+            with dpg.plot(label="Rpm vs Oil Pressure", height=793, width=dpg.get_viewport_width() - 235, crosshairs=True):
                             
                 dpg.add_plot_legend()
                 
@@ -363,8 +369,8 @@ class OilStarvationView:
                                     )
 
                 
-        with dpg.child_window(tag="Oil Starvation distrobution Graph", show=False):
-            with dpg.plot(label="Oil Starvation Distrobution", height=800, width=dpg.get_viewport_width() - 250, crosshairs=True):
+        with dpg.child_window(tag="Oil Starvation distrobution Graph", show=False, border=False):
+            with dpg.plot(label="Oil Starvation Distrobution", height=793, width=dpg.get_viewport_width() - 235, crosshairs=True):
                             
                 dpg.add_plot_legend()
                 
