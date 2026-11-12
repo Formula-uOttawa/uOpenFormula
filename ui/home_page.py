@@ -258,7 +258,7 @@ class HomePage:
 
                 with dpg.table_row():
                     dpg.add_text(
-                        default_value="Version: Alpha", color=[255, 255, 255, 200]
+                        default_value="Version: Pre-Beta", color=[255, 255, 255, 200]
                     )
 
     def new_project(self):
@@ -357,6 +357,8 @@ class HomePage:
                     # Parent node with no dedicated view — just a placeholder
                     dpg.add_text(f"{node.tag}: select a sub-view from the sidebar.")
 
+        dpg.set_viewport_resize_callback(lambda: self.resize_windows())
+
     def get_motm(self):
         """
         generates random message of the month
@@ -420,41 +422,76 @@ class HomePage:
                     no_resize=True,
                     no_collapse=True,
                 ):  
-                    message = self.get_motm()
+                    self.message = self.get_motm()
 
                     dpg.add_image( load_texture("assets/formula_logo.png"), width=450, height=150, tag="home_logo")
 
-                    dpg.add_text(message, tag="home_message")
+                    dpg.add_text(self.message, tag="home_message")
                     dpg.bind_item_font("home_message", "Heading_font")
+                    self.positon_motm()
+    
+    def positon_motm(self):
+        window_width, window_height = dpg.get_item_rect_size("home_view")
+        
+        
+        # Get the actual sizes
+                            
+        text_width, text_height = dpg.get_text_size(self.message)
+        text_width *= 2
+        text_height *= 2
+        
+        # Space between logo and text
+        gap = 50
+        
+        # Total height of both elements
+        total_height = 150 + gap + text_height
+        
+        # Center the entire layout vertically
+        start_y = (window_height - total_height - 400) / 2
+        
+        # Center logo horizontally
+        logo_x = (window_width - 470) / 2
+        
+        # Center text horizontally
+        text_x = (window_width - text_width - 20) / 2
+        
+        # Position both elements
+        dpg.set_item_pos("home_logo", [logo_x, start_y])
+        dpg.set_item_pos("home_message", [text_x, start_y + 150 + gap])
 
-                    window_width, window_height = dpg.get_item_rect_size("home_view")
+    def resize_windows(self):
+        viewport_width = dpg.get_viewport_width()
+        viewport_height = dpg.get_viewport_height()
+
+        # Resize navigation window
+        dpg.configure_item(
+            "navbar",
+            height=viewport_height - 67
+        )
+        
+
+        # Resize all analysis windows
+        for window in self.SWAPPABLE_WINDOWS:
+            if dpg.does_item_exist(window):
+                dpg.configure_item(
+                    window,
+                    width=viewport_width - 219,
+                    height=viewport_height - 67
+                )
 
 
-                    # Get the actual sizes
-                    
-                    text_width, text_height = dpg.get_text_size(message)
-                    text_width *= 2
-                    text_height *= 2
+        
+        # Resize Home window
+        if dpg.does_item_exist("home_view"):
+            dpg.configure_item(
+            "home_view",
+            width=viewport_width - 219,
+            height=viewport_height - 67
+            )
+            dpg.set_frame_callback(
+                dpg.get_frame_count() +2,
+                lambda *args: self.positon_motm()
+            )
+            
 
-                    # Space between logo and text
-                    gap = 50
 
-                    # Total height of both elements
-                    total_height = 150 + gap + text_height
-
-                    # Center the entire layout vertically
-                    start_y = (window_height - total_height - 400) / 2
-
-                    # Center logo horizontally
-                    logo_x = (window_width - 470) / 2
-
-                    # Center text horizontally
-                    text_x = (window_width - text_width - 20) / 2
-
-                    # Position both elements
-                    dpg.set_item_pos("home_logo", [logo_x, start_y])
-
-                    dpg.set_item_pos(
-                        "home_message",
-                        [text_x, start_y + 150 + gap]
-                    )

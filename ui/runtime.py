@@ -81,7 +81,6 @@ class Runtime:
                 dpg.add_menu_item(tag="help_button", label="Help", callback=lambda: None)
             
 
-
     def update_break_temp(self, temps):
         self.render_manager.brake_temps = temps
 
@@ -101,3 +100,5 @@ class Runtime:
 
     def set_brake_texture(self, texture):
         self.render_manager.generate_brake_texture = texture
+
+
