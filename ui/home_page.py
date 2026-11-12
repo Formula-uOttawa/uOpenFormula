@@ -403,6 +403,7 @@ class HomePage:
             "The Seat is Full Of Water",
             "Loading at Ferrari strategy speed",
             "Try a Kalman Filter - PhD Knowledge",
+            'We Made "Various Changes" - Josh',
         ]
         
         return(messages[randint(0, len(messages)-1)])
