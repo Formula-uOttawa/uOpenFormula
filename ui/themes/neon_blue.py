@@ -21,7 +21,7 @@ def neon_blue():
             dpg.add_theme_color(dpg.mvThemeCol_Separator, (0, 200, 255))
 
             # text
-            dpg.add_theme_color(dpg.mvThemeCol_Text, (210, 220, 255))
+            dpg.add_theme_color(dpg.mvThemeCol_Text, (255, 255, 255))
 
             
             # Remove borders
