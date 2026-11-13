@@ -9,6 +9,8 @@ class SidePodView:
         self.df = DataManager.df
         self.path = DataManager.path
         self.calibration_values = {}
+        self.process_noise = 1.0  # Q: how quickly the true value may change
+        self.measurement_noise = 25.0  # R: how noisy the sensor readings are
 
 
     def build(self, parent_tag):
@@ -26,7 +28,6 @@ class SidePodView:
 
         else:
             self.refresh()
-
 
 
     def analog_to_pressure(self, value, calibration):
@@ -49,6 +50,48 @@ class SidePodView:
         return speed_ms * 3.6
 
 
+    def kalman_filter(self, values):
+
+        estimate = float(values[0])
+        uncertainty = self.measurement_noise
+        filtered = []
+
+        for value in values:
+            value = float(value)
+            if not math.isfinite(value):
+                filtered.append(estimate)
+                continue
+
+
+            uncertainty += self.process_noise
+            gain = uncertainty / (uncertainty + self.measurement_noise)
+            estimate += gain * (value - estimate)
+            uncertainty *= (1.0 - gain)
+            filtered.append(estimate)
+
+        return filtered
+
+
+    def update_filter(self, sender=None, app_data=None, user_data=None):
+        """Recalculate and redraw the graph when Q or R changes."""
+
+        self.process_noise = max(0.0, dpg.get_value("sidepod_kalman_q"))
+        self.measurement_noise = max(0.000001, dpg.get_value("sidepod_kalman_r"))
+
+        
+        dpg.set_value("sidepod_kalman_q", self.process_noise)
+        dpg.set_value("sidepod_kalman_r", self.measurement_noise)
+
+        series = {
+            "sidepod_front_series": self.front_pressure,
+            "sidepod_rear_series": self.rear_pressure,
+            "sidepod_pitot_series": self.airspeed,
+        }
+
+        for tag, original_values in series.items():
+            if dpg.does_item_exist(tag):
+                dpg.set_value(tag, [self.time, self.kalman_filter(original_values)])
+
     def refresh(self):
         """Called after new data loads to update content."""
 
@@ -57,10 +100,8 @@ class SidePodView:
 
 
         aero_sensors = ("Aero 1", "Aero 2", "Aero 3")
-        if len(self.df) < 5:
-            raise ValueError("Side pod analysis needs at least five samples to calibrate its sensors.")
 
-        # The first five samples establish each analog sensor's individual zero.
+        # The first five value are averaged to caibrate the 0 for each sensor
         self.calibration_values = {
             sensor: self.df[sensor].iloc[:5].mean()
             for sensor in aero_sensors
@@ -86,11 +127,36 @@ class SidePodView:
             for value in self.df["Aero 2"].tolist()
         ]
 
-        # GPS speed
+        
         self.gps_speed = self.df["GPS Speed"].tolist()
 
 
-        with dpg.child_window(tag="Side Pod Pressure graph", show=True):
+        
+        if dpg.does_item_exist("Side Pod Pressure graph"):
+            dpg.delete_item("Side Pod Pressure graph")
+
+        with dpg.child_window(tag="Side Pod Pressure graph"):
+
+            dpg.add_text("Kalman Filter Settings")
+            dpg.add_input_float(
+                label="Process noise (Q)",
+                tag="sidepod_kalman_q",
+                default_value=self.process_noise,
+                min_value=0.0,
+                min_clamped=True,
+                format="%.4f",
+                callback=self.update_filter
+            )
+            dpg.add_input_float(
+                label="Measurement noise (R)",
+                tag="sidepod_kalman_r",
+                default_value=self.measurement_noise,
+                min_value=0.000001,
+                min_clamped=True,
+                format="%.4f",
+                callback=self.update_filter
+            )
+            dpg.add_text("Higher Q = responds faster; higher R = smoother but slower.")
 
             with dpg.plot(
                 label="Side Pod Pressure",
@@ -120,28 +186,32 @@ class SidePodView:
 
                 dpg.add_line_series(
                     x=self.time,
-                    y=self.front_pressure,
-                    label="Front Pressure",
+                    y=self.kalman_filter(self.front_pressure),
+                    tag="sidepod_front_series",
+                    label="Front Pressure (filtered)",
                     parent="Pressure Axis"
                 )
 
                 dpg.add_line_series(
                     x=self.time,
-                    y=self.rear_pressure,
-                    label="Rear Pressure",
+                    y=self.kalman_filter(self.rear_pressure),
+                    tag="sidepod_rear_series",
+                    label="Rear Pressure (filtered)",
                     parent="Pressure Axis"
                 )
 
                 dpg.add_line_series(
                     x=self.time,
                     y=self.gps_speed,
-                    label="GPS Speed",
+                    tag="sidepod_gps_series",
+                    label="GPS Speed (filtered)",
                     parent="Speed Axis"
                 )
 
                 dpg.add_line_series(
                     x=self.time,
-                    y=self.airspeed,
-                    label="Pitot Airspeed",
+                    y=self.kalman_filter(self.airspeed),
+                    tag="sidepod_pitot_series",
+                    label="Pitot Airspeed (filtered)",
                     parent="Speed Axis"
                 )
