@@ -40,9 +40,9 @@ jobs:
               uses: actions/checkout@v4
 
             - name: install Doxygen and Graphviz
-              run: 
+              run: |
                 sudo apt-get update
-                sudo apg-get install -y doxygen graphviz
+                sudo apt-get install -y doxygen graphviz
 
             - name: Generate documentation
               run: doxygen Doxyfile
