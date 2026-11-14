@@ -73,7 +73,9 @@ class OilStarvationView:
         time = self.df["Time"].tolist()
         
         # Repeat those steps for all the data you need
-
+        # If you need to perform calculation on the data,
+        # make a file in the core folder and then make a 
+        # function in there, and import it to here and then run it.
 
         # Now we can build your analysis page. We will do this using a Child Window.
         # Tags are used to track objects that are created with dearpygui, 

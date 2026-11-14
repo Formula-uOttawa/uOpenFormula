@@ -1,0 +1,16 @@
+[tool.ruff]
+line-length = 100
+
+[tool.ruff.lint]
+select = [
+    "E4",       # Import and syntax issues
+    "E7",       # Statement formatting
+    "E9",       # Larger syntax errors
+    "F",        # Common python mistakes
+    "D101",     # Missing class documentation
+    "D102",     # Missing method docstrings
+    "D103",     # Missing function docstrings
+]
+
+[tools.ruff.lint.per-file-ignores]
+"tests/**" = ["D101","D102","D103"]
