@@ -72,9 +72,9 @@ class BrakeTempView:
         self.dm.update_brake_temps(temps)
         self.dm.generate_disc_function(self.generate_disc_texture)
 
-        with dpg.child_window(tag="Brake Temp Heatmap"):
+        
             
-            with dpg.group(horizontal=True):
+        with dpg.group(horizontal=True):
                 with dpg.child_window(tag = "brake_disc_window", width=((dpg.get_viewport_width()-265)/2), height=430, no_scroll_with_mouse=True):
                     dpg.add_text(tag = "Brake Disc View", label="Brake Disc View (Paused)")
                     dpg.add_image("disc_texture", width=300, height=300)

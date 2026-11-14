@@ -9,17 +9,21 @@ def neon_blue():
             dpg.add_theme_color(dpg.mvThemeCol_WindowBg, (12, 15, 30))
             dpg.add_theme_color(dpg.mvThemeCol_ChildBg, (18, 22, 45))
             dpg.add_theme_color(dpg.mvThemeCol_FrameBg, (25, 30, 60))
-            dpg.add_theme_color(dpg.mvThemeCol_MenuBarBg,(32, 35, 80))
+            dpg.add_theme_color(dpg.mvThemeCol_MenuBarBg,(32, 35, 70))
+            dpg.add_theme_color(dpg.mvThemeCol_PopupBg, (32, 35, 70))
+            dpg.add_theme_color(dpg.mvThemeCol_TitleBg, (20, 90, 140))
+
 
             # neon accents
             dpg.add_theme_color(dpg.mvThemeCol_Button, (18, 22, 45))
             dpg.add_theme_color(dpg.mvThemeCol_ButtonHovered, (25, 30, 60))
             dpg.add_theme_color(dpg.mvThemeCol_ButtonActive, (20, 25, 55))
+            dpg.add_theme_color(dpg.mvThemeCol_Separator, (0, 200, 255))
 
             # text
-            dpg.add_theme_color(dpg.mvThemeCol_Text, (210, 220, 255))
+            dpg.add_theme_color(dpg.mvThemeCol_Text, (255, 255, 255))
 
-            # borders / highlights
+            
             # Remove borders
             dpg.add_theme_style(dpg.mvStyleVar_WindowBorderSize, 0)
             dpg.add_theme_style(dpg.mvStyleVar_ChildBorderSize, 0)

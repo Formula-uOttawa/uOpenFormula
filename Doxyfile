@@ -1,0 +1,25 @@
+PROJECT_NAME = "uOpenFormula"
+
+# what to check
+INPUT = .
+RECURSIVE = YES
+FILE_PATTERNS = *.py
+EXCLUDE_PATTERNS = */.venv/* */venv/* */build/*
+
+# include functions and classes
+EXTRACT_ALL = YES
+EXTRACT_PRIVATE = YES
+
+# generate the website
+GENERATE_HTML = YES
+GENERATE_LATEX = NO
+OUTPUT_DIRECTORY = build
+
+# diagram types
+HAVE_DOT = YES
+UML_LOOK = YES
+CLASS_GRAPH = YES 
+COLLABORATION_GRAPH = YES
+DOT_UML_DETAILS = YES
+
+QUIET = YES

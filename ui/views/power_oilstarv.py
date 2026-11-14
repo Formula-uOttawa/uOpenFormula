@@ -1,5 +1,5 @@
 import dearpygui.dearpygui as dpg
-
+from core.view_computations.oil_starvation_calculations import classify_oil_values
 
 class OilStarvationView:
     """ Displays the Oil Starvation View """
@@ -44,7 +44,6 @@ class OilStarvationView:
         dpg.show_item(showing_graph)
         
 
-
     def build(self, parent_tag):
         """Called once to populate the window."""
 
@@ -68,7 +67,7 @@ class OilStarvationView:
         """
 
         
-        self.classify_oil_values()  # Calls function to recalulate data
+        classify_oil_values(self)  # Calls function to recalulate data
 
         # Updates Graph data
         dpg.set_value("rpm vs oil upper", [self.oil_operating_RPM, self.oil_operating_upper])
@@ -85,7 +84,6 @@ class OilStarvationView:
         dpg.configure_item("Oil Pressure Low", label=f"Oil Pressure Low ({self.low_percent:.1f}%)")
         dpg.configure_item("Oil Pressure Normal", label=f"Oil Pressure Normal ({self.normal_percent:.1f}%)")
         dpg.configure_item("Oil Pressure High", label=f"Oil Pressure High ({self.high_percent:.1f}%)")
-
 
 
     def reset_oil_ranges(self):
@@ -115,6 +113,7 @@ class OilStarvationView:
             )
 
         self.reset_oil_graphs()  # Updates the graphs.
+
        
     def update_graphs(self):
         """
@@ -131,95 +130,6 @@ class OilStarvationView:
             self.oil_operating_upper[i] = dpg.get_value(f'upper_{i}')
 
         self.reset_oil_graphs()  # Updates graphs with new limits.
-        
-    def classify_oil_values(self):
-        """
-            Divides data into new data structures needed for various graphs.
-        
-            Args:
-                self (object): The Oil starvation view itself.
-                
-        """
-
-        # Initalizes the variables needed to store calculated data.
-        self.total_starvation_events = 0
-        self.oil_upper_timed = []
-        self.oil_lower_timed = []
-        self.lat_g_low = []
-        self.lon_g_low = []
-        self.lat_g_normal = []
-        self.lon_g_normal = []
-        self.lat_g_high = []
-        self.lon_g_high = []
-        self.pressure_excess = []
-        self.starvation_distrobution_percentages = []
-        self.starvation_distrobution = { 
-            0 : [], 10 : [], 20 : [], 30 : [], 40 : [], 50 : [],
-            60 : [], 70 : [], 80 : [], 90 : [], 100 : [], 110 : []
-        }
-        self.starvation_distrobution_rpm = {
-            0 : [], 1000 : [], 2000 : [], 3000 : [], 4000 : [], 5000 : [],
-            6000 : [], 7000 : [], 8000 : [], 9000 : [], 10000 : [], 11000 : [],
-            12000 : [], 13000 : [], 14000 : [], 15000 : []
-        }
-        self.starvation_distrobution_keys = list(self.starvation_distrobution)
-        self.starvation_distrobution_rpm_keys = list(self.starvation_distrobution_rpm)
-
-
-        # Finds the upper and lower limit of each data point and scales it.
-        for i in range(len(self.time)):
-            for j in range(len(self.oil_operating_RPM)):
-                if self.rpm[i] >= self.oil_operating_RPM[j]:
-                    rpm_index = j
-                else:
-                    break
-            self.oil_upper_timed.append(self.oil_operating_upper[rpm_index] * 100)
-            self.oil_lower_timed.append(self.oil_operating_lower[rpm_index] * 100)
-
-        # Classifies each g-force data point acording to that moments pressure limits.
-        for i in range(len(self.lat_g)):
-        
-            for j in range(len(self.oil_operating_RPM)):
-                          
-                if round(self.rpm[i],-3) <= self.oil_operating_RPM[j]:
-        
-                    if self.oil_pressure[i] < self.oil_operating_lower[j]:
-                        self.lat_g_low.append(self.lat_g[i])
-                        self.lon_g_low.append(self.long_g[i])
-                    elif self.oil_pressure[i] > self.oil_operating_upper[j]:
-                        self.lat_g_high.append(self.lat_g[i])
-                        self.lon_g_high.append(self.long_g[i])
-                    else:
-                        self.lat_g_normal.append(self.lat_g[i])
-                        self.lon_g_normal.append(self.long_g[i])
-        
-                    break
-
-        # Calculates the averages for each pressure classification.
-        self.low_percent = len(self.lat_g_low)/len(self.lat_g)*100
-        self.normal_percent = len(self.lat_g_normal)/len(self.lat_g)*100
-        self.high_percent = len(self.lat_g_high)/len(self.lat_g)*100
-
-        # Calculates the excess oil pressure at each data point and records the starvation for distrobution graph.
-        for i in range(len(self.time)):
-
-            excess_current_scaled = (self.oil_p_scaled[i] - (self.oil_lower_timed[i] + self.oil_upper_timed[i]) / 2 )
-            excess_current = excess_current_scaled / -100
-            self.pressure_excess.append(excess_current_scaled)
-
-            if  0 < excess_current < 110 :
-                self.starvation_distrobution[round(excess_current, -1)].append(excess_current)
-                self.starvation_distrobution_rpm[round(self.rpm[i], -3)].append(excess_current)
-                self.total_starvation_events += 1
- 
-        
-            
-        self.avg_excess = (sum(self.pressure_excess) / len(self.pressure_excess) / 100 )
-        
-        
-        for i in range (len(self.starvation_distrobution)):
-        
-            self.starvation_distrobution_percentages.append(len(self.starvation_distrobution[i*10])/self.total_starvation_events*100)
 
 
     def refresh(self):
@@ -238,7 +148,7 @@ class OilStarvationView:
         self.long_g_scaled = (self.df["GPS LonAcc"] * 10).tolist()
         self.long_g = self.df["GPS LonAcc"].tolist()
         self.rad_temp = (self.df["ECU ECT"] * 100).tolist()
-        self.classify_oil_values()
+        classify_oil_values(self)
                                  
                                   
         # Creates graph selection menu bar.
@@ -253,8 +163,8 @@ class OilStarvationView:
             #Creates drop down to change pressure limits.
             with dpg.menu(tag="Change Safe Pressure Range", label="Change Safe Pressure Range"):  
                 with dpg.group(horizontal=True):
-                    dpg.add_button(label="Update", callback=lambda: self.update_graphs(), width = 250)
-                    dpg.add_button(label="Reset", callback=lambda: self.reset_oil_ranges(), width = 250)
+                    dpg.add_button(label="Update", callback=lambda: self.update_graphs(), width = 185)
+                    dpg.add_button(label="Reset", callback=lambda: self.reset_oil_ranges(), width = 185)
 
                 for i in range(len(self.oil_operating_RPM)):
 
@@ -264,14 +174,20 @@ class OilStarvationView:
                         dpg.add_input_float(
                             tag = f"lower_{i}",
                             label = "Lower",
+                            width = 140,
                             default_value = self.oil_operating_lower[i],
+                            min_value=0,
+                            min_clamped=True,
                             step = 1.0
                         )
 
                         dpg.add_input_float(
                             tag = f"upper_{i}",
                             label = "Upper",
+                            width = 140,
                             default_value = self.oil_operating_upper[i],
+                            min_value=0,
+                            min_clamped=True,
                             step = 1.0
                         )
 
@@ -279,8 +195,8 @@ class OilStarvationView:
 
                 
         
-        with dpg.child_window(tag="Rpm & Oil Pressure graph", show=False):
-            with dpg.plot(label="Rpm & Oil Pressure", height=800, width=dpg.get_viewport_width() - 250, crosshairs=True):
+        with dpg.child_window(tag="Rpm & Oil Pressure graph", show=False, border=False):
+            with dpg.plot(label="Rpm & Oil Pressure", height=793, width=dpg.get_viewport_width() - 235, crosshairs=True):
                     
                 dpg.add_plot_legend()
         
@@ -294,9 +210,9 @@ class OilStarvationView:
                 dpg.add_line_series(x=self.time, y=self.pressure_excess, tag = "Excess Oil Pressure", label=f"Excess Oil Pressure ({self.avg_excess:.1f})", parent="y_axis_rpm_and_oil")
                 dpg.add_line_series(x=self.time, y=self.rad_temp, label="Temp (C) X 100", parent="y_axis_rpm_and_oil")
                 
-        with dpg.child_window(tag="G-forces & Oil Pressure graph", show=False):
+        with dpg.child_window(tag="G-forces & Oil Pressure graph", show=False, border=False):
                             
-            with dpg.plot(label="G-forces & Oil Pressure", height=800, width=dpg.get_viewport_width() - 250, crosshairs=True):
+            with dpg.plot(label="G-forces & Oil Pressure", height=793, width=dpg.get_viewport_width() - 235, crosshairs=True):
                             
                 dpg.add_plot_legend()
                 
@@ -307,8 +223,8 @@ class OilStarvationView:
                 dpg.add_line_series(x=self.time, y=self.long_g_scaled, label="longitudinal G (Forward/Backward) X 10", parent="y_axis_Gforce_and_oil")
                 dpg.add_line_series(x=self.time, y=self.lat_g_scaled, label="lateral G (Left/Right) X 10", parent="y_axis_Gforce_and_oil")
         
-        with dpg.child_window(tag="G-forces & Low Oil Pressure plot", show=False):
-            with dpg.plot(label="G-forces & Low Oil Pressure Events", height=800, width=dpg.get_viewport_width() - 250, crosshairs=True):
+        with dpg.child_window(tag="G-forces & Low Oil Pressure plot", show=False, border=False):
+            with dpg.plot(label="G-forces & Low Oil Pressure Events", height=793, width=dpg.get_viewport_width() - 235, crosshairs=True):
                             
                 dpg.add_plot_legend()
                 
@@ -338,8 +254,8 @@ class OilStarvationView:
                                        )             
                    
         
-        with dpg.child_window(tag="Rpm vs Oil Pressure plot", show=False):
-            with dpg.plot(label="Rpm vs Oil Pressure", height=800, width=dpg.get_viewport_width() - 250, crosshairs=True):
+        with dpg.child_window(tag="Rpm vs Oil Pressure plot", show=False, border = False):
+            with dpg.plot(label="Rpm vs Oil Pressure", height=793, width=dpg.get_viewport_width() - 235, crosshairs=True):
                             
                 dpg.add_plot_legend()
                 
@@ -363,8 +279,8 @@ class OilStarvationView:
                                     )
 
                 
-        with dpg.child_window(tag="Oil Starvation distrobution Graph", show=False):
-            with dpg.plot(label="Oil Starvation Distrobution", height=800, width=dpg.get_viewport_width() - 250, crosshairs=True):
+        with dpg.child_window(tag="Oil Starvation distrobution Graph", show=False, border=False):
+            with dpg.plot(label="Oil Starvation Distrobution", height=793, width=dpg.get_viewport_width() - 235, crosshairs=True):
                             
                 dpg.add_plot_legend()
                 
