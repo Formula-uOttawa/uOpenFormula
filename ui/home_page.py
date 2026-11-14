@@ -2,13 +2,15 @@ import importlib
 import pkgutil
 import platform
 import tkinter as tk
-import dearpygui.dearpygui as dpg
-import ui.views as views_package
 from random import randint
 from subprocess import check_output
 from sys import executable  # To run subprocess
 from tkinter import filedialog
+
+import dearpygui.dearpygui as dpg
 from treelib import Tree
+
+import ui.views as views_package
 from ui.utils.load_texture import load_texture
 
 
@@ -305,7 +307,7 @@ class HomePage:
 
     def mac_open_file(self):
         file = check_output([executable, "./ui/get_file.py"])
-        return(f"{file=}")
+        return file.decode().strip()
 
     def show_home(self):
         self._build_nav_tree()
@@ -351,6 +353,8 @@ class HomePage:
                 dpg.bind_item_theme(node.identifier, "cyan_border_theme")
                 if node.identifier in VIEW_MAP:
                     view = VIEW_MAP[node.identifier](self.importer)
+                    if hasattr(view, "attach_state"):
+                        view.attach_state()
                     view.build(node.identifier)  # parent_tag = window tag
                     self.views[node.identifier] = view
                 else:

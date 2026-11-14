@@ -1,8 +1,16 @@
 import dearpygui.dearpygui as dpg
 from core.view_computations.oil_starvation_calculations import classify_oil_values
+from core.StatefulView import StatefulView
+from core.save_management import save_project
 
-class OilStarvationView:
+class OilStarvationView(StatefulView):
     """ Displays the Oil Starvation View """
+
+    STATE = {
+        "oil_operating_upper": [0,29,45,60,70,85,95,100,110,115],
+        "oil_operating_lower": [0,10,14,14,30,60,70,75,75,75],
+        "oil_operating_rpm": [0,1000,2000,3000,4000,6000,8000,10000,12000,14000]
+    }
 
     def __init__(self, DataManager):
 
@@ -17,11 +25,6 @@ class OilStarvationView:
         self.oil_default_upper = [0,29,45,60,70,85,95,100,110,115]
         self.oil_default_lower = [0,10,14,14,30,60,70,75,75,75]
 
-        #The Limits for Oil Pressures set by user
-        self.oil_operating_upper = [0,29,45,60,70,85,95,100,110,115]
-        self.oil_operating_lower = [0,10,14,14,30,60,70,75,75,75]
-        self.oil_operating_RPM = [0,1000,2000,3000,4000,6000,8000,10000,12000,14000]
-        
 
     def show_graph(self, showing_graph):
 
@@ -70,8 +73,8 @@ class OilStarvationView:
         classify_oil_values(self)  # Calls function to recalulate data
 
         # Updates Graph data
-        dpg.set_value("rpm vs oil upper", [self.oil_operating_RPM, self.oil_operating_upper])
-        dpg.set_value("rpm vs oil lower", [self.oil_operating_RPM, self.oil_operating_lower])
+        dpg.set_value("rpm vs oil upper", [self.state["oil_operating_rpm"], self.state["oil_operating_upper"]])
+        dpg.set_value("rpm vs oil lower", [self.state["oil_operating_rpm"], self.state["oil_operating_lower"]])
         dpg.set_value("Oil Pressure Low", [self.lat_g_low, self.lon_g_low])
         dpg.set_value("Oil Pressure Normal", [self.lat_g_normal, self.lon_g_normal])
         dpg.set_value("Oil Pressure High", [self.lat_g_high, self.lon_g_high])
@@ -96,8 +99,8 @@ class OilStarvationView:
         """
 
         # Resets the values to their defaults.
-        self.oil_operating_lower = self.oil_default_lower.copy()
-        self.oil_operating_upper = self.oil_default_upper.copy()
+        self.state["oil_operating_lower"] = self.oil_default_lower.copy()
+        self.state["oil_operating_upper"] = self.oil_default_upper.copy()
 
         # Resets the menu to display the reseted values.
         for i in range(len(self.oil_default_lower)):
@@ -124,12 +127,11 @@ class OilStarvationView:
         
         """
 
-        # Gets the new limits from menu.
-        for i in range(len(self.oil_operating_RPM)):
-            self.oil_operating_lower[i] = dpg.get_value(f'lower_{i}')
-            self.oil_operating_upper[i] = dpg.get_value(f'upper_{i}')
+        for i in range(len(self.state["oil_operating_rpm"])):
+            self.state["oil_operating_lower"][i] = dpg.get_value(f'lower_{i}')
+            self.state["oil_operating_upper"][i] = dpg.get_value(f'upper_{i}')
 
-        self.reset_oil_graphs()  # Updates graphs with new limits.
+        self.reset_oil_graphs() 
 
 
     def refresh(self):
@@ -166,16 +168,16 @@ class OilStarvationView:
                     dpg.add_button(label="Update", callback=lambda: self.update_graphs(), width = 185)
                     dpg.add_button(label="Reset", callback=lambda: self.reset_oil_ranges(), width = 185)
 
-                for i in range(len(self.oil_operating_RPM)):
+                for i in range(len(self.state["oil_operating_rpm"])):
 
-                    dpg.add_text(f"{self.oil_operating_RPM[i]} RPM")
+                    dpg.add_text(f"{self.state["oil_operating_rpm"][i]} RPM")
 
                     with dpg.group(horizontal=True):
                         dpg.add_input_float(
                             tag = f"lower_{i}",
                             label = "Lower",
                             width = 140,
-                            default_value = self.oil_operating_lower[i],
+                            default_value = self.state["oil_operating_lower"][i],
                             min_value=0,
                             min_clamped=True,
                             step = 1.0
@@ -185,7 +187,7 @@ class OilStarvationView:
                             tag = f"upper_{i}",
                             label = "Upper",
                             width = 140,
-                            default_value = self.oil_operating_upper[i],
+                            default_value = self.state["oil_operating_upper"][i],
                             min_value=0,
                             min_clamped=True,
                             step = 1.0
@@ -264,15 +266,15 @@ class OilStarvationView:
                 dpg.add_plot_axis(dpg.mvYAxis, label="Oil Pressure", tag="y_axis_rpm_vs_oil")
                 dpg.add_scatter_series(x=self.rpm, y=self.oil_pressure, label="Oil Pressure (PSI)", parent="y_axis_rpm_vs_oil")
 
-                dpg.add_line_series(x=self.oil_operating_RPM,
-                                    y=self.oil_operating_upper, 
+                dpg.add_line_series(x=self.state["oil_operating_rpm"],
+                                    y=self.state["oil_operating_upper"], 
                                     tag="rpm vs oil upper",
                                     label="Oil Pressure Upper Limit (PSI)", 
                                     parent="y_axis_rpm_vs_oil"
                                     )
                 
-                dpg.add_line_series(x=self.oil_operating_RPM, 
-                                    y=self.oil_operating_lower, 
+                dpg.add_line_series(x=self.state["oil_operating_rpm"], 
+                                    y=self.state["oil_operating_lower"], 
                                     tag="rpm vs oil lower",
                                     label="Oil Pressure Lower Limit (PSI)", 
                                     parent="y_axis_rpm_vs_oil"

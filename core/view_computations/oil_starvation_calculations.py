@@ -40,25 +40,25 @@ def classify_oil_values(self):
 
         # Finds the upper and lower limit of each data point and scales it.
         for i in range(len(self.time)):
-            for j in range(len(self.oil_operating_RPM)):
-                if self.rpm[i] >= self.oil_operating_RPM[j]:
+            for j in range(len(self.state["oil_operating_rpm"])):
+                if self.rpm[i] >= self.state["oil_operating_rpm"][j]:
                     rpm_index = j
                 else:
                     break
-            self.oil_upper_timed.append(self.oil_operating_upper[rpm_index] * 100)
-            self.oil_lower_timed.append(self.oil_operating_lower[rpm_index] * 100)
+            self.oil_upper_timed.append(self.state["oil_operating_upper"][rpm_index] * 100)
+            self.oil_lower_timed.append(self.state["oil_operating_lower"][rpm_index] * 100)
 
         # Classifies each g-force data point acording to that moments pressure limits.
         for i in range(len(self.lat_g)):
         
-            for j in range(len(self.oil_operating_RPM)):
+            for j in range(len(self.state["oil_operating_rpm"])):
                           
-                if round(self.rpm[i],-3) <= self.oil_operating_RPM[j]:
+                if round(self.rpm[i],-3) <= self.state["oil_operating_rpm"][j]:
         
-                    if self.oil_pressure[i] < self.oil_operating_lower[j]:
+                    if self.oil_pressure[i] < self.state["oil_operating_lower"][j]:
                         self.lat_g_low.append(self.lat_g[i])
                         self.lon_g_low.append(self.long_g[i])
-                    elif self.oil_pressure[i] > self.oil_operating_upper[j]:
+                    elif self.oil_pressure[i] > self.state["oil_operating_upper"][j]:
                         self.lat_g_high.append(self.lat_g[i])
                         self.lon_g_high.append(self.long_g[i])
                     else:
