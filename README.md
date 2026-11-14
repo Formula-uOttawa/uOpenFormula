@@ -142,6 +142,13 @@ During aggressive cornering, braking, and acceleration, engine oil can shift ins
 
 
 
+## Software Architecture
+
+View our [UML Class Diagram](docs\architecture.md)
+to understand how the telemetry application is structured.
+
+
+
 
 
 ![Alt Text](https://i.redd.it/q0dd3k02unqb1.gif)
