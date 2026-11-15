@@ -1,13 +1,8 @@
 import importlib
 import pkgutil
-import platform
-import tkinter as tk
 import dearpygui.dearpygui as dpg
 import ui.views as views_package
 from random import randint
-from subprocess import check_output
-from sys import executable  # To run subprocess
-from tkinter import filedialog
 from treelib import Tree
 from ui.utils.load_texture import load_texture
 
@@ -87,7 +82,7 @@ class HomePage:
         self.nav.create_node("Frequency analysis", "susp_freq", parent="susp")
         self.nav.create_node("Slip angle", "susp_slip", parent="susp")
 
-        self.nav.create_node("Raw Data", "raw_data", parent="home")
+        self.nav.create_node("Data Files", "datamanager_view", parent="home")
 
         # How we track the current state of the navbar. List gets appended with
         # entries as we go through the tree.
@@ -275,13 +270,31 @@ class HomePage:
     def load_file(self):
         self.new_dataset()
 
+    def load_new_data_file(self):
+
+        new_datasets = self.DataManager.create_dataset()
+        for dataset_id, dataset in new_datasets:
+
+            if dpg.does_item_exist("show_data_files"):
+                self.views["datamanager_view"].add_file(dataset_id, dataset)
+
+        with dpg.window(height= 200, width= 600, no_resize=True, no_move=True, no_collapse=True, modal=True):
+            dpg.add_spacer(height=40)
+            with dpg.group(horizontal=True):
+                message = f"Successfully imported {len(new_datasets)} file(s)!"
+                text_width = dpg.get_text_size(message)[0]
+                dpg.add_text( message, pos=[(600 - text_width) / 2, 70])
+                for i, (dataset_id, dataset) in enumerate(new_datasets):
+                    name_width = dpg.get_text_size(dataset.name)[0]
+                    dpg.add_text(dataset.name, pos=[(600 - name_width) / 2, 95 + i * 25])
+
     def new_dataset(self):
         """
         Select a file using native operating system UI.
         """
 
         self.DataManager.create_dataset()
-
+        
     def show_home(self):
         self._build_nav_tree()
 

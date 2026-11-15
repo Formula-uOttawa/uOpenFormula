@@ -6,17 +6,17 @@ class DataSet:
 
     def __init__(self):
         self.path = ""              # Path to the CSV file
-        self.df = None              # DataFrame to hold the loaded data
+        self.df = None              # pandas DataFrame to hold the loaded data
         self.df_excl_time = None    # DataFrame excluding 'Time' column
         self.metadata = {}          # Metadata that is located at the top of the csv files
         self.channels = {}          # Channel items with their units
         self.header_index = None    # Index of the header row
 
-
-    def import_and_validate(self, path):
+    def import_and_validate(self, path, name):
         """Global method to import and validate the MoTeC CSV file."""
         
         self.path = path
+        self.name = name
         
         #TODO: error handling
         if not os.path.exists(self.path):
@@ -123,7 +123,4 @@ class DataSet:
             raise ValueError("All sensors show no variation (excluding 'Time' column).")
         print("[DEBUG] Data variation check (excluding 'Time') passed.")
 
-
-
-    
 

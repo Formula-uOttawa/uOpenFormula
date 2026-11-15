@@ -1,8 +1,9 @@
 # get_file.py
 from tkinter import filedialog
 
-file = filedialog.askopenfilename()
-print(file, end="")
+files = filedialog.askopenfilenames()
+for file in files:
+    print(file)
 
 
 
