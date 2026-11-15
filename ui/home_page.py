@@ -35,13 +35,10 @@ VIEW_MAP = _load_view_map()
 class HomePage:
     """Stores the logic of the home and landing page gui. TODO do this docstring"""
 
-    file_path = ""
-    df = None
-
     SWAPPABLE_WINDOWS = []  # populated dynamically from tree
 
-    def __init__(self, importer):
-        self.importer = importer
+    def __init__(self, DataManager):
+        self.DataManager = DataManager
 
     def nav_themes(self):
         # Active nav button highlighted
@@ -276,36 +273,14 @@ class HomePage:
         self.show_home()
 
     def load_file(self):
-        self.select_file_tk()
+        self.new_dataset()
 
-    def select_file_tk(self):
+    def new_dataset(self):
         """
         Select a file using native operating system UI.
         """
 
-        if platform.system() == "Windows":
-            self.file_path = self.windows_open_file()
-
-        elif platform.system() == "Darwin":
-            self.file_path = self.mac_open_file()
-
-        elif platform.system() == "Linux":
-            print("Running on Linux")
-
-        self.df = self.importer.import_and_validate(self.file_path)
-
-    def windows_open_file(self):
-        # TODO: move this to the new data manager view
-        root = tk.Tk()
-        root.withdraw()
-        file_path = filedialog.askopenfilename()
-        root.destroy()  # DO NOT DELETE EVER
-
-        return file_path
-
-    def mac_open_file(self):
-        file = check_output([executable, "./ui/get_file.py"])
-        return(f"{file=}")
+        self.DataManager.create_dataset()
 
     def show_home(self):
         self._build_nav_tree()
@@ -350,7 +325,7 @@ class HomePage:
             ):
                 dpg.bind_item_theme(node.identifier, "cyan_border_theme")
                 if node.identifier in VIEW_MAP:
-                    view = VIEW_MAP[node.identifier](self.importer)
+                    view = VIEW_MAP[node.identifier](self.DataManager)
                     view.build(node.identifier)  # parent_tag = window tag
                     self.views[node.identifier] = view
                 else:

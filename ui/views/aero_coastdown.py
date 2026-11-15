@@ -3,7 +3,7 @@ import dearpygui.dearpygui as dpg
 class AeroCoastdownView:
     
     def __init__(self, DataManager):
-        self.df = DataManager.df
+        self.df = DataManager.get_dataset(0)
 
     def build(self, parent_tag):
         """Called once to populate the window."""

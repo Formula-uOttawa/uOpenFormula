@@ -8,8 +8,8 @@ class Runtime:
 
 
     def __init__(self):
-        self.importer = DataManager(self.update_break_temp, self.play_brake_temps, self.set_brake_temp_step, self.set_brake_texture)
-        self.home_page = HomePage(self.importer)
+        self.DataManager = DataManager(self.update_break_temp, self.play_brake_temps, self.set_brake_temp_step, self.set_brake_texture)
+        self.home_page = HomePage(self.DataManager)
         self.render_manager = rm()
         self.boot()
 

@@ -3,7 +3,9 @@ import dearpygui.dearpygui as dpg
 class RawDataView:
     
     def __init__(self, DataManager):
-        self.df = DataManager.df
+        self.ds = DataManager.get_dataset(0)
+        self.df = self.ds.df
+        self.path = self.ds.path
         
 
     def build(self, parent_tag):
