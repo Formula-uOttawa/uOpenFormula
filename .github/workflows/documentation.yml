@@ -45,7 +45,7 @@ jobs:
 
         permissions: 
             contents: read
-            pages: read
+            pages: write
             id-token: write
 
         environment: 
