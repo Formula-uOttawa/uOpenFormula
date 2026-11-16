@@ -22,11 +22,15 @@ class OilStarvationView:
     def __init__(self, DataManager):
 
         # This imports all the data to self.df
-        self.df = DataManager.df  
+        self.ds = DataManager.get_dataset(0) 
 
         # This gets the path for where the data is located on your pc.
         # You don't need to change this.
-        self.path = DataManager.path
+        self.path = self.ds.path
+
+        
+        self.df = self.ds.df
+        
 
         # Next set any of the constants you need.
         MAX_OIL_TEMP = 48

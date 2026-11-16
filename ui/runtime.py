@@ -6,13 +6,11 @@ from ui.themes import neon_blue
 
 class Runtime:
 
-
     def __init__(self):
-        self.importer = DataManager(self.update_break_temp, self.play_brake_temps, self.set_brake_temp_step, self.set_brake_texture)
-        self.home_page = HomePage(self.importer)
+        self.DataManager = DataManager(self.update_break_temp, self.play_brake_temps, self.set_brake_temp_step, self.set_brake_texture)
+        self.home_page = HomePage(self.DataManager)
         self.render_manager = rm()
         self.boot()
-
 
     def boot(self):
                 """Initializes the homepage and loads all necessary elements."""
@@ -64,13 +62,13 @@ class Runtime:
                 self.render_manager.start()
                 dpg.destroy_context()
 
-
     def init_menu_bar(self):
             # Add and populate menu bar at the top.
             with dpg.viewport_menu_bar(tag="Main Menu Bar"):  
                 with dpg.menu(tag="file_menu", label="File"):
+                    dpg.add_menu_item(label="Load Project", callback=lambda: None)
                     dpg.add_menu_item(label="Save Project", callback=lambda: None)
-                    dpg.add_menu_item(label="Load Project", callback=lambda: self.home_page.load_file())
+                    dpg.add_menu_item(label="Load New Data File", callback=lambda: self.home_page.load_new_data_file()) 
 
                 
                 with dpg.menu(tag="debugging_tools_menu", label="Debugging Tools"):
@@ -80,10 +78,8 @@ class Runtime:
 
                 dpg.add_menu_item(tag="help_button", label="Help", callback=lambda: None)
             
-
     def update_break_temp(self, temps):
         self.render_manager.brake_temps = temps
-
 
     def play_brake_temps(self, flag):
         self.render_manager.play_brake_temps = flag
@@ -92,11 +88,9 @@ class Runtime:
         else:
              dpg.set_value("Brake Disc View", "Brake Disc View (Paused)")
 
-
     def set_brake_temp_step(self, playrate):
 
         self.render_manager.update_interval = (1/(20 * playrate))
-
 
     def set_brake_texture(self, texture):
         self.render_manager.generate_brake_texture = texture

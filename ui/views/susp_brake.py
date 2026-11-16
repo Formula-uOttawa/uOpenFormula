@@ -5,8 +5,9 @@ class BrakeTempView:
     
     def __init__(self, DataManager):
         self.dm = DataManager
-        self.df = DataManager.df  
-        self.path = DataManager.path
+        self.ds = DataManager.get_dataset(0)
+        self.df = self.ds.df
+        self.path = self.ds.path
         self.size = 150
         self.inner_radius = 22.5
         self.outer_radius = 70

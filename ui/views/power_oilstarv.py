@@ -9,8 +9,9 @@ class OilStarvationView:
         """ Initalizes the Oil Starvation View """
 
             
-        self.df = DataManager.df
-        self.path = DataManager.path
+        self.ds = DataManager.get_dataset(0)
+        self.df = self.ds.df
+        self.path = self.ds.path
         self.current_graph = None  # Holds the tag of the current graph being shown.
 
         # The Default Limits for Oil Pressures

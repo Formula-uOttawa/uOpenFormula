@@ -1,13 +1,8 @@
 import importlib
 import pkgutil
-import platform
-import tkinter as tk
 import dearpygui.dearpygui as dpg
 import ui.views as views_package
 from random import randint
-from subprocess import check_output
-from sys import executable  # To run subprocess
-from tkinter import filedialog
 from treelib import Tree
 from ui.utils.load_texture import load_texture
 
@@ -35,13 +30,10 @@ VIEW_MAP = _load_view_map()
 class HomePage:
     """Stores the logic of the home and landing page gui. TODO do this docstring"""
 
-    file_path = ""
-    df = None
-
     SWAPPABLE_WINDOWS = []  # populated dynamically from tree
 
-    def __init__(self, importer):
-        self.importer = importer
+    def __init__(self, DataManager):
+        self.DataManager = DataManager
 
     def nav_themes(self):
         # Active nav button highlighted
@@ -90,7 +82,7 @@ class HomePage:
         self.nav.create_node("Frequency analysis", "susp_freq", parent="susp")
         self.nav.create_node("Slip angle", "susp_slip", parent="susp")
 
-        self.nav.create_node("Raw Data", "raw_data", parent="home")
+        self.nav.create_node("Data Files", "datamanager_view", parent="home")
 
         # How we track the current state of the navbar. List gets appended with
         # entries as we go through the tree.
@@ -276,37 +268,33 @@ class HomePage:
         self.show_home()
 
     def load_file(self):
-        self.select_file_tk()
+        self.new_dataset()
 
-    def select_file_tk(self):
+    def load_new_data_file(self):
+
+        new_datasets = self.DataManager.create_dataset()
+        for dataset_id, dataset in new_datasets:
+
+            if dpg.does_item_exist("show_data_files"):
+                self.views["datamanager_view"].add_file(dataset_id, dataset)
+
+        with dpg.window(height= 200, width= 600, no_resize=True, no_move=True, no_collapse=True, modal=True):
+            dpg.add_spacer(height=40)
+            with dpg.group(horizontal=True):
+                message = f"Successfully imported {len(new_datasets)} file(s)!"
+                text_width = dpg.get_text_size(message)[0]
+                dpg.add_text( message, pos=[(600 - text_width) / 2, 70])
+                for i, (dataset_id, dataset) in enumerate(new_datasets):
+                    name_width = dpg.get_text_size(dataset.name)[0]
+                    dpg.add_text(dataset.name, pos=[(600 - name_width) / 2, 95 + i * 25])
+
+    def new_dataset(self):
         """
         Select a file using native operating system UI.
         """
 
-        if platform.system() == "Windows":
-            self.file_path = self.windows_open_file()
-
-        elif platform.system() == "Darwin":
-            self.file_path = self.mac_open_file()
-
-        elif platform.system() == "Linux":
-            print("Running on Linux")
-
-        self.df = self.importer.import_and_validate(self.file_path)
-
-    def windows_open_file(self):
-        # TODO: move this to the new data manager view
-        root = tk.Tk()
-        root.withdraw()
-        file_path = filedialog.askopenfilename()
-        root.destroy()  # DO NOT DELETE EVER
-
-        return file_path
-
-    def mac_open_file(self):
-        file = check_output([executable, "./ui/get_file.py"])
-        return(f"{file=}")
-
+        self.DataManager.create_dataset()
+        
     def show_home(self):
         self._build_nav_tree()
 
@@ -350,7 +338,7 @@ class HomePage:
             ):
                 dpg.bind_item_theme(node.identifier, "cyan_border_theme")
                 if node.identifier in VIEW_MAP:
-                    view = VIEW_MAP[node.identifier](self.importer)
+                    view = VIEW_MAP[node.identifier](self.DataManager)
                     view.build(node.identifier)  # parent_tag = window tag
                     self.views[node.identifier] = view
                 else:
