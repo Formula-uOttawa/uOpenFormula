@@ -13,10 +13,13 @@ class BrakeTempView:
         self.outer_radius = 70
         self.bands = 16
         self.setup_disc_geometry() # assigns pixels to bands for heatmap
+        
 
     
     def build(self, parent_tag):
         """Called once to populate the window."""
+
+        dpg.configure_item("susp_brake", no_scrollbar=True, no_scroll_with_mouse=True)
 
         if self.path == "":
                      
@@ -76,7 +79,7 @@ class BrakeTempView:
         
             
         with dpg.group(horizontal=True):
-                with dpg.child_window(tag = "brake_disc_window", width=((dpg.get_viewport_width()-265)/2), height=430, no_scroll_with_mouse=True):
+                with dpg.child_window(tag = "brake_disc_window", width=((dpg.get_viewport_width()-245)/2), height=430, no_scroll_with_mouse=True):
                     dpg.add_text(tag = "Brake Disc View", label="Brake Disc View (Paused)")
                     dpg.add_image("disc_texture", width=300, height=300)
                     dpg.add_spacer(height=50)
@@ -96,7 +99,7 @@ class BrakeTempView:
                                             callback = lambda: self.dm.set_brake_temp_step(dpg.get_value("Play rate menu"))
                                            )
                         
-                with dpg.child_window(tag = "channel_temp_window",width=((dpg.get_viewport_width()-265)/2), height=430, border=True):
+                with dpg.child_window(tag = "channel_temp_window",width=((dpg.get_viewport_width()-245)/2), height=430, border=True):
                     dpg.add_text("Channel Temperatures")
                     dpg.add_separator()
                     dpg.add_text("", tag="temp_text")
@@ -104,6 +107,10 @@ class BrakeTempView:
                 dpg.add_spacer(height=8)
         dpg.bind_item_theme("brake_disc_window", "cyan_border_theme")
         dpg.bind_item_theme("channel_temp_window", "cyan_border_theme")
+
+    def resize(self):
+        dpg.configure_item("brake_disc_window", width=((dpg.get_viewport_width()-245)/2), height=430) 
+        dpg.configure_item("channel_temp_window", width=((dpg.get_viewport_width()-245)/2), height=430) 
 
     def temp_to_color(self, temp):
         """
@@ -211,3 +218,6 @@ class BrakeTempView:
             image[mask, 3] = 1.0
 
         return image.flatten().tolist()
+
+
+    

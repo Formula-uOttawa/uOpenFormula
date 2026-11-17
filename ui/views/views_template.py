@@ -144,3 +144,6 @@ class OilStarvationView:
                 dpg.add_plot_axis(dpg.mvXAxis, label="RPM")
                 dpg.add_plot_axis(dpg.mvYAxis, label="Oil Pressure", tag="y_axis_rpm_vs_oil")
                 dpg.add_scatter_series(x=rpm, y=oil_pressure, label="Oil Pressure (Bar)", parent="y_axis_rpm_vs_oil")
+
+    def resize(self):
+        dpg.configure_item(item="", width=((dpg.get_viewport_width()-245)/2), height=430 )

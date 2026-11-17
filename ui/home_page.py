@@ -468,6 +468,12 @@ class HomePage:
                     height=viewport_height - 67
                 )
 
+            view = self.views.get(window)
+
+            if view is not None and callable(getattr(view, "resize", None)):
+                view.resize()
+
+
 
         
         # Resize Home window
