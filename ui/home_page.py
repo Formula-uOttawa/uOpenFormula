@@ -275,10 +275,10 @@ class HomePage:
         new_datasets = self.DataManager.create_dataset()
         for dataset_id, dataset in new_datasets:
 
-            if dpg.does_item_exist("show_data_files"):
+            if dpg.does_item_exist("datamanager_view"):
                 self.views["datamanager_view"].add_file(dataset_id, dataset)
 
-        with dpg.window(height= 200, width= 600, no_resize=True, no_move=True, no_collapse=True, modal=True):
+        with dpg.window(width= 600, no_resize=True, no_move=True, no_collapse=True, modal=True):
             dpg.add_spacer(height=40)
             with dpg.group(horizontal=True):
                 message = f"Successfully imported {len(new_datasets)} file(s)!"
@@ -287,6 +287,7 @@ class HomePage:
                 for i, (dataset_id, dataset) in enumerate(new_datasets):
                     name_width = dpg.get_text_size(dataset.name)[0]
                     dpg.add_text(dataset.name, pos=[(600 - name_width) / 2, 95 + i * 25])
+            dpg.add_spacer(height=40)
 
     def new_dataset(self):
         """

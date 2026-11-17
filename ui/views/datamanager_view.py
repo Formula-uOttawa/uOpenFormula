@@ -5,12 +5,9 @@ class DataFilesView:
     
     def __init__(self, DataManager):
         self.data_manager = DataManager
-        
-        
 
     def build(self, parent_tag):
         """Called once to populate the window."""
-
         if (self.data_manager.datasets == {}):
             
             dpg.add_text("Raw Data View", parent=parent_tag)
@@ -24,19 +21,23 @@ class DataFilesView:
         """Called after new data loads to update content."""
         if dpg.does_item_exist("show_data"):
                     dpg.delete_item("show_data")
-        
-        with dpg.child_window(tag="show_data_files", label="Data Files Loaded"):
-             for dataset_id, dataset in self.data_manager.datasets.items():
-                with dpg.group(horizontal=True):
-                    dpg.add_text(tag=f"{dataset_id}_showdata_text", default_value=dataset.name, parent="show_data_file" )
-                    dpg.add_button(label="view", callback=lambda: None)
+    
+             
+        for dataset_id, dataset in self.data_manager.datasets.items():
+            self.add_file(dataset_id, dataset)
 
     def add_file(self, dataset_id , dataset):
-        with dpg.group(horizontal=True, parent="show_data_files"):
-            dpg.add_text(tag=f"{dataset_id}_showdata_text", default_value=dataset.name)
-            dpg.add_button(label="view", callback=lambda: None)
-
-
+        with dpg.child_window(tag=f"{dataset_id}_showdata_window",
+                              parent="datamanager_view", 
+                              auto_resize_y=True, 
+                              autosize_x = True, 
+                              border=False,
+                              always_use_window_padding=True
+                              ):
+            
+            with dpg.collapsing_header(tag=f"{dataset_id}_showdata_text", label=dataset.name,parent=f"{dataset_id}_showdata_window"):
+                dpg.add_separator()
+                dpg.add_text("Dataset information")
 
 
     def table(self):
