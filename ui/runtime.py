@@ -33,8 +33,8 @@ class Runtime:
 
         with dpg.font_registry():
             normal_font = dpg.add_font("Assets/Fonts/Oxanium-Regular.ttf", 14)
-            heading_font = dpg.add_font("Assets/Fonts/Oxanium-SemiBold.ttf", 28, tag = "Heading_font")
             menu_font = dpg.add_font("Assets/Fonts/Oxanium_Regular_viewport_menubar.ttf", 13)
+            
                 
         dpg.bind_font(normal_font)
 

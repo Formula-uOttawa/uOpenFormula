@@ -349,6 +349,9 @@ class HomePage:
         self.DataManager.create_dataset()
         
     def show_home(self):
+        """
+        Builds the main view with the navigation bar.
+        """
         self._build_nav_tree()
 
         self.views = {}

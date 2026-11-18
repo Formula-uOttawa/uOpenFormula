@@ -60,7 +60,7 @@ class OilStarvationView:
 
 
         # Hides current graph
-        if self.current_graph != None :
+        if self.current_graph is not None :
              dpg.hide_item(self.current_graph)
 
         self.current_graph = showing_graph

@@ -42,7 +42,7 @@ class RenderManager():
             #TODO: change the susp_brake to brake temp heatmap once other graphs are done
             if self.play_brake_temps:
 
-                if dpg.is_item_shown("susp_brake") == False:
+                if not dpg.is_item_shown("susp_brake"):
                     self.play_brake_temps = False
                     dpg.set_value("Brake Disc View", "Brake Disc View (Paused)")
                     
