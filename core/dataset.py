@@ -3,8 +3,25 @@ import pandas as pd
 
 
 class DataSet:
-
+    """ 
+    Turns a csv into a dataset.
+            
+    Atributes:
+        path (str): path to the data.
+        df (pandas dataframe): The pandas dataframe.
+        df_excl_time (pandas dataframe): The pandas dataframe without the time column.
+        metadata (dictionary): Metadata from the csv.
+        channels (dictionary): Saves the Channel items with their rows.
+        header_index (int): The index of the header row.
+        
+    """
     def __init__(self):
+        """ 
+        Initalizes the Oil Starvation View.
+    
+        Args:
+            DataManager (DataManager): Location to DataManager.
+        """
         self.path = ""              # Path to the CSV file
         self.df = None              # pandas DataFrame to hold the loaded data
         self.df_excl_time = None    # DataFrame excluding 'Time' column
@@ -13,7 +30,13 @@ class DataSet:
         self.header_index = None    # Index of the header row
 
     def import_and_validate(self, path, name):
-        """Global method to import and validate the MoTeC CSV file."""
+        """
+        Imports and validates the Aim CSV file.
+
+        Args:
+            path (str): Path to the file.
+            name (str): File name.
+        """
         
         self.path = path
         self.name = name
@@ -31,8 +54,7 @@ class DataSet:
 
     def _load(self):
         """
-        Loads the file, checks for errors, ignores certain 
-        info (such as comments in MoTeC), saves the file
+        Loads the file.
         """
 
         df = pd.read_csv(
@@ -60,7 +82,9 @@ class DataSet:
         print("[DEBUG] Data loaded successfully with shape:", self.df.shape)
         
     def _find_header_index_and_metadata(self):
-        """Finds the index of the header row starting with 'Time'."""
+        """
+        Finds the index of the header row starting with 'Time'.
+        """
                 
         target = '"Time"'
         encountered = False
@@ -94,7 +118,9 @@ class DataSet:
         print("[DEBUG] Metadata extracted:", self.metadata)
 
     def _validate_not_all_zero(self):
-        """Validates to make sure not all numeric data is zero."""
+        """
+        Validates to make sure not all numeric data is zero.
+        """
 
         if self.df.empty:
             raise ValueError("No Numeric Data Found")
@@ -113,7 +139,9 @@ class DataSet:
         print("[DEBUG] Non-zero data check (excluding 'Time') passed.")
 
     def _validate_variation(self):
-        """Validates to make sure sensors aren't frozen or logs are corrupted."""
+        """
+        Validates to make sure sensors aren't frozen or logs are corrupted.
+        """
 
         if all(self.df[col].nunique() <= 1 for col in self.df.columns):
             raise ValueError("All sensors show no variation.")

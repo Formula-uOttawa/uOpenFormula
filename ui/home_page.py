@@ -28,14 +28,36 @@ VIEW_MAP = _load_view_map()
 
 
 class HomePage:
-    """Stores the logic of the home and landing page gui. TODO do this docstring"""
+    """
+    The HomePage of the entire application and the logic handler for all UI.
+
+    Attributes:
+        DataManager (DataManager): Saves the location of DataManager.
+        nav (Tree): The navigation tree.
+        theme_nav_active (DPG theme): Theme of nav buttons when active.
+        theme_nav_inactive (DPG theme): Theme of nav buttons when not active.
+        SWAPPABLE_WINDOWS (List): List of all windows create by navigation tree.
+        nav_stack (String): Current Root node.
+        views (List): Holds the tags of all current views created.
+        message (String): The message displayed on home view.
+
+    """
 
     SWAPPABLE_WINDOWS = []  # populated dynamically from tree
 
     def __init__(self, DataManager):
+        """
+        Saves DataManager path for future reference.
+
+        Args:
+            DataManager (DataManager): The DataManager object created in Runtime.
+        """
         self.DataManager = DataManager
 
     def nav_themes(self):
+        """
+        Creates the Theme for Navigation Buttons
+        """
         # Active nav button highlighted
         with dpg.theme() as self.theme_nav_active:
             with dpg.theme_component(dpg.mvButton):
@@ -54,6 +76,10 @@ class HomePage:
                 dpg.add_theme_style(dpg.mvStyleVar_FrameRounding, 6.0)
 
     def _build_nav_tree(self):
+        """
+        Creates the Navigation tree.
+        """
+
         self.nav = Tree()
         self.nav.create_node("Home", "home")
 
@@ -96,7 +122,9 @@ class HomePage:
         ]
 
     def push_nav(self, view_key):
-        """Drill into a child view, or select a leaf without redrawing sidebar."""
+        """
+        Drill into a child view, or select a leaf without redrawing sidebar.
+        """
         children = self.nav.children(view_key)
         is_leaf = len(children) == 0
 
@@ -110,14 +138,18 @@ class HomePage:
             self._switch_main_view(view_key)
 
     def pop_nav(self):
-        """Go up one level."""
+        """
+        Go up one level.
+        """
         if len(self.nav_stack) > 1:
             self.nav_stack.pop()
             self._refresh_sidebar()
             self._switch_main_view(self.nav_stack[-1])
 
     def _update_highlights(self, active_key):
-        """Highlight the active button among its siblings in the current sidebar."""
+        """
+        Highlight the active button among its siblings in the current sidebar.
+        """
         parent_key = self.nav_stack[-1]
         siblings = self.nav.children(parent_key)
 
@@ -132,7 +164,9 @@ class HomePage:
                 dpg.bind_item_theme(btn_tag, theme)
 
     def _switch_main_view(self, view_key):
-        """Show only the window matching view_key, hide all others."""
+        """
+        Show only the window matching view_key, hide all others.
+        """
 
         dpg.configure_item("home_view", show=(view_key == "home"))
 
@@ -141,11 +175,16 @@ class HomePage:
                 dpg.configure_item(win, show=(win == view_key))
 
     def _refresh_sidebar(self):
-        """Wipe and redraw sidebar contents for the current nav stack top."""
+        """
+        Wipe and redraw sidebar contents for the current nav stack top.
+        """
         dpg.delete_item("navbar", children_only=True)
         self._build_sidebar_for(self.nav_stack[-1])
 
     def _build_sidebar_for(self, view_key):
+        """
+        Builds the Navigation bar.
+        """
         node = self.nav.get_node(view_key)
         children = self.nav.children(view_key)
 
@@ -173,9 +212,9 @@ class HomePage:
             )
 
     def show_landing(self):
-        # Create the main window.
-
-        viewport_width = dpg.get_viewport_width()
+        """
+        Creates the Landing Page.
+        """
         viewport_height = dpg.get_viewport_height()
         vertical_padding = (viewport_height - 360) / 2
 
@@ -254,11 +293,17 @@ class HomePage:
                     )
 
     def new_project(self):
+        """
+        Starts a new Project.
+        """
         # meant for future use
 
         self.load_project()
 
     def load_project(self):
+        """
+        Loads a project.
+        """
         # meant for future use
         self.load_file()
 
@@ -268,17 +313,24 @@ class HomePage:
         self.show_home()
 
     def load_file(self):
+        """ 
+        Creates a new dataset.
+        """
+
         self.new_dataset()
 
     def load_new_data_file(self):
+        """
+        Creates a new dataset AFTER a project is started/loaded. (used by viewport menubar)
+        """
 
         new_datasets = self.DataManager.create_dataset()
         for dataset_id, dataset in new_datasets:
 
-            if dpg.does_item_exist("show_data_files"):
+            if dpg.does_item_exist("datamanager_view"):
                 self.views["datamanager_view"].add_file(dataset_id, dataset)
 
-        with dpg.window(height= 200, width= 600, no_resize=True, no_move=True, no_collapse=True, modal=True):
+        with dpg.window(width= 600, no_resize=True, no_move=True, no_collapse=True, modal=True):
             dpg.add_spacer(height=40)
             with dpg.group(horizontal=True):
                 message = f"Successfully imported {len(new_datasets)} file(s)!"
@@ -287,6 +339,7 @@ class HomePage:
                 for i, (dataset_id, dataset) in enumerate(new_datasets):
                     name_width = dpg.get_text_size(dataset.name)[0]
                     dpg.add_text(dataset.name, pos=[(600 - name_width) / 2, 95 + i * 25])
+            dpg.add_spacer(height=40)
 
     def new_dataset(self):
         """
@@ -296,6 +349,9 @@ class HomePage:
         self.DataManager.create_dataset()
         
     def show_home(self):
+        """
+        Builds the main view with the navigation bar.
+        """
         self._build_nav_tree()
 
         self.views = {}
@@ -399,6 +455,9 @@ class HomePage:
         return(messages[randint(0, len(messages)-1)])
 
     def make_home_view(self):
+        """
+        Creates the home view AFTER a project is started/loaded.
+        """
         with dpg.window(
                     label="Welcome to uOpenFormula",
                     tag="home_view",
@@ -419,6 +478,9 @@ class HomePage:
                     self.positon_motm()
     
     def positon_motm(self):
+        """
+        Centers the home view message
+        """
         window_width, window_height = dpg.get_item_rect_size("home_view")
         
         
@@ -448,6 +510,9 @@ class HomePage:
         dpg.set_item_pos("home_message", [text_x, start_y + 150 + gap])
 
     def resize_windows(self):
+        """
+        Resizes the windows associated with the views and any items inside the views.
+        """
         viewport_width = dpg.get_viewport_width()
         viewport_height = dpg.get_viewport_height()
 
@@ -466,6 +531,12 @@ class HomePage:
                     width=viewport_width - 219,
                     height=viewport_height - 67
                 )
+
+            view = self.views.get(window)
+
+            if view is not None and callable(getattr(view, "resize", None)):
+                view.resize()
+
 
 
         

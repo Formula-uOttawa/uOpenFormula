@@ -2,11 +2,37 @@ import dearpygui.dearpygui as dpg
 from core.view_computations.oil_starvation_calculations import classify_oil_values
 
 class OilStarvationView:
-    """ Displays the Oil Starvation View """
+    """ 
+    View for OilStarvation.
+            
+    Atributes:
+        ds (DataSet): Location to Inital Dataset.
+        df (DataFrame): Location to data from the Inital Dataset in Pandas format.
+        path (String): File path for inital Dataset.
+        current_graph (String): Tag of the window of the graph being shown.
+        oil_default_upper (list): Default upper oil pressure limit.
+        oil_default_lower (list): Default lower oil pressure limit.
+        oil_operating_upper (list): User's upper oil pressure limit.
+        oil_operating_lower (list): User's lower oil pressure limit.
+        oil_operating_rpm (list): Rpm Zones.
+        time (List): Time data column from DataFrame.
+        rpm (List): RPM data column from DataFrame.
+        oil_pressure (List): Oil Pressure data column from DataFrame.
+        oip_pressure_scaled (List): Oil Pressure data column from DataFrame X 100.
+        lat_g (List): lateral G-force data column from DataFrame.
+        lat_g_scaled (List): lateral G-force data column from DataFrame X 10.
+        long_g (List): Longitudinal G-force data column from DataFrame.
+        long_g_scaled (List): Longitudinal G-force data column from DataFrame X 10.
+        rad_temp (List): Coolant Temperature data column from DataFrame.
+    """
 
     def __init__(self, DataManager):
+        """ 
+        Initalizes the Oil Starvation View.
 
-        """ Initalizes the Oil Starvation View """
+        Args:
+            DataManager (DataManager): Location to DataManager.
+        """
 
             
         self.ds = DataManager.get_dataset(0)
@@ -23,30 +49,31 @@ class OilStarvationView:
         self.oil_operating_lower = [0,10,14,14,30,60,70,75,75,75]
         self.oil_operating_RPM = [0,1000,2000,3000,4000,6000,8000,10000,12000,14000]
         
-
     def show_graph(self, showing_graph):
 
         """
         Changes displayed graph.
 
         Args: 
-            Self (object): The oil starvation window itself.
             showing_graph (string): The tag of the window you want to display.
-
         """ 
 
 
         # Hides current graph
-        if self.current_graph != None :
+        if self.current_graph is not None :
              dpg.hide_item(self.current_graph)
 
         self.current_graph = showing_graph
 
         dpg.show_item(showing_graph)
         
-
     def build(self, parent_tag):
-        """Called once to populate the window."""
+        """
+        Called once to populate the window.
+        
+        Args:
+            parent_tag (String): Tag of the view window.
+        """
 
         if self.path == "":
              
@@ -57,14 +84,9 @@ class OilStarvationView:
         else:
             self.refresh()
 
-
     def reset_oil_graphs(self):
         """
         Updates graphs in the Oil Starvation View.
-
-        Args:
-            self (object): The Oil starvation view itself.
-
         """
 
         
@@ -86,14 +108,9 @@ class OilStarvationView:
         dpg.configure_item("Oil Pressure Normal", label=f"Oil Pressure Normal ({self.normal_percent:.1f}%)")
         dpg.configure_item("Oil Pressure High", label=f"Oil Pressure High ({self.high_percent:.1f}%)")
 
-
     def reset_oil_ranges(self):
         """
         Changes the Upper and Lower limit of allowed oil pressure back to default values.
-
-        Args:
-            self (object): The Oil starvation view itself.
-        
         """
 
         # Resets the values to their defaults.
@@ -114,15 +131,10 @@ class OilStarvationView:
             )
 
         self.reset_oil_graphs()  # Updates the graphs.
-
        
     def update_graphs(self):
         """
         Changes the Upper and Lower limit of allowed oil pressure then calls reset_oil_graphs.
-
-        Args:
-            self (object): The Oil starvation view itself.
-        
         """
 
         # Gets the new limits from menu.
@@ -132,9 +144,10 @@ class OilStarvationView:
 
         self.reset_oil_graphs()  # Updates graphs with new limits.
 
-
     def refresh(self):
-        """Called after new data loads to update content."""
+        """
+        Called after new data loads to update content.
+        """
 
         if dpg.does_item_exist("oil_starvation_placeholder"):
             dpg.delete_item("oil_starvation_placeholder")
@@ -197,7 +210,7 @@ class OilStarvationView:
                 
         
         with dpg.child_window(tag="Rpm & Oil Pressure graph", show=False, border=False):
-            with dpg.plot(label="Rpm & Oil Pressure", height=793, width=dpg.get_viewport_width() - 235, crosshairs=True):
+            with dpg.plot(label="Rpm & Oil Pressure", height=-1, width=-1, crosshairs=True):
                     
                 dpg.add_plot_legend()
         
@@ -213,7 +226,7 @@ class OilStarvationView:
                 
         with dpg.child_window(tag="G-forces & Oil Pressure graph", show=False, border=False):
                             
-            with dpg.plot(label="G-forces & Oil Pressure", height=793, width=dpg.get_viewport_width() - 235, crosshairs=True):
+            with dpg.plot(label="G-forces & Oil Pressure", height=-1, width=-1, crosshairs=True):
                             
                 dpg.add_plot_legend()
                 
@@ -225,7 +238,7 @@ class OilStarvationView:
                 dpg.add_line_series(x=self.time, y=self.lat_g_scaled, label="lateral G (Left/Right) X 10", parent="y_axis_Gforce_and_oil")
         
         with dpg.child_window(tag="G-forces & Low Oil Pressure plot", show=False, border=False):
-            with dpg.plot(label="G-forces & Low Oil Pressure Events", height=793, width=dpg.get_viewport_width() - 235, crosshairs=True):
+            with dpg.plot(label="G-forces & Low Oil Pressure Events", height=-1, width=-1, crosshairs=True):
                             
                 dpg.add_plot_legend()
                 
@@ -256,7 +269,7 @@ class OilStarvationView:
                    
         
         with dpg.child_window(tag="Rpm vs Oil Pressure plot", show=False, border = False):
-            with dpg.plot(label="Rpm vs Oil Pressure", height=793, width=dpg.get_viewport_width() - 235, crosshairs=True):
+            with dpg.plot(label="Rpm vs Oil Pressure", height=-1, width=-1, crosshairs=True):
                             
                 dpg.add_plot_legend()
                 
@@ -281,7 +294,7 @@ class OilStarvationView:
 
                 
         with dpg.child_window(tag="Oil Starvation distrobution Graph", show=False, border=False):
-            with dpg.plot(label="Oil Starvation Distrobution", height=793, width=dpg.get_viewport_width() - 235, crosshairs=True):
+            with dpg.plot(label="Oil Starvation Distrobution", height=-1, width=-1, crosshairs=True):
                             
                 dpg.add_plot_legend()
                 

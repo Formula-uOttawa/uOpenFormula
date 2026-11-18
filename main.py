@@ -5,4 +5,4 @@ if __name__ == "__main__":
 else:
     quit()
 
-app = Runtime()
+app = Runtime() # Starts the Application

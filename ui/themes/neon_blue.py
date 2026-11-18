@@ -1,6 +1,12 @@
 import dearpygui.dearpygui as dpg
 
 def neon_blue():
+    """
+    Sets the Neon Blue Theme
+
+    Returns:
+        DPG Theme: The neon blue theme
+    """
 
     with dpg.theme() as neon_blue:
         with dpg.theme_component(dpg.mvAll):
@@ -12,7 +18,12 @@ def neon_blue():
             dpg.add_theme_color(dpg.mvThemeCol_MenuBarBg,(32, 35, 70))
             dpg.add_theme_color(dpg.mvThemeCol_PopupBg, (32, 35, 70))
             dpg.add_theme_color(dpg.mvThemeCol_TitleBg, (20, 90, 140))
-
+            dpg.add_theme_color(dpg.mvThemeCol_Header, (18, 22, 45))
+            dpg.add_theme_color(dpg.mvThemeCol_HeaderHovered, (25, 30, 60))
+            dpg.add_theme_color(dpg.mvThemeCol_HeaderActive, (25, 30, 60))
+            
+            
+        
 
             # neon accents
             dpg.add_theme_color(dpg.mvThemeCol_Button, (18, 22, 45))
@@ -51,7 +62,12 @@ def neon_blue():
     return(neon_blue)
 
 def create_image_button_theme():
+    """
+    Sets the image Theme
 
+    Returns:
+        DPG Theme: The image theme
+    """
     with dpg.theme() as image_theme:
         with dpg.theme_component(dpg.mvImageButton):
 
