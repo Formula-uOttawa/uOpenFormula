@@ -3,6 +3,7 @@ from ui.render_manager import RenderManager
 from core.data_manager import DataManager
 from ui.home_page import HomePage
 from ui.themes import neon_blue
+import webbrowser
 
 class Runtime:
     """
@@ -81,7 +82,8 @@ class Runtime:
                 dpg.add_menu_item(label="Debugging Menu", callback=lambda: dpg.show_debug())
                 dpg.add_menu_item(label="Item  Registry", callback=lambda: dpg.show_item_registry())
 
-            dpg.add_menu_item(tag="help_button", label="Help", callback=lambda: None)
+            dpg.add_menu_item(tag="help_button", label="Help", 
+                              callback=lambda: webbrowser.open("https://formula-uottawa.github.io/uOpenFormula/"))
             
     def update_break_temp(self, temps):
         """
@@ -139,5 +141,3 @@ class Runtime:
         
         """
         self.render_manager.generate_brake_texture = texture
-
-
