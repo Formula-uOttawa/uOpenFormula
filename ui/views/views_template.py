@@ -18,8 +18,23 @@ import dearpygui.dearpygui as dpg
 # Name your class as the first value of the node without the spaces and 
 # add "View" to the end. Using the example from above we get OilStarvationView
 class OilStarvationView: 
+    """
+    Example.
+
+    Atributes:
+        Example (Example): Example
+    """
     
     def __init__(self, DataManager):
+        """
+        Example.
+        
+        Args:
+            Example (Example): Example.
+
+        Return:
+            Example: Example
+        """
 
         # This imports all the data to self.df
         self.ds = DataManager.get_dataset(0) 
@@ -110,8 +125,26 @@ import dearpygui.dearpygui as dpg
 
 
 class OilStarvationView: 
+    """
+    Example.
+        
+    Args:
+        Example (Example): Example.
+
+    Return:
+        Example: Example
+    """
     
     def __init__(self, DataManager):
+        """
+        Example.
+                
+        Args:
+            Example (Example): Example.
+        
+        Return:
+            Example: Example
+        """
  
         self.df = DataManager.df  
         self.path = DataManager.path
@@ -146,4 +179,13 @@ class OilStarvationView:
                 dpg.add_scatter_series(x=rpm, y=oil_pressure, label="Oil Pressure (Bar)", parent="y_axis_rpm_vs_oil")
 
     def resize(self):
+        """
+        Example.
+                
+        Args:
+            Example (Example): Example.
+        
+        Return:
+            Example: Example
+        """
         dpg.configure_item(item="", width=((dpg.get_viewport_width()-245)/2), height=430 )

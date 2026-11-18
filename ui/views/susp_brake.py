@@ -2,8 +2,29 @@ import dearpygui.dearpygui as dpg
 import numpy as np
 
 class BrakeTempView: 
+    """
+    View for BrakeTemp. Creates Heatmap.
+        
+    Atributes:
+        dm (DataManager): Location to DataManager.
+        ds (DataSet): Location to Inital Dataset.
+        df (DataFrame): Location to data from the Inital Dataset in Pandas format.
+        path (String): File path for inital Dataset.
+        size (int): Number of pixels in the length of the heatmap.
+        inner_radius (float): radius as a number of pixels to exclude from heatmap.
+        outer_radius (float): radius as a number of pixels for the entire heatmap.
+        bands (int): number of channels in the temp sensor.
+
+    """
     
     def __init__(self, DataManager):
+        """
+        Declares the instance variables. 
+
+        Args:
+            DataManager (DataManager): Location to DataManager.
+
+        """
         self.dm = DataManager
         self.ds = DataManager.get_dataset(0)
         self.df = self.ds.df
@@ -13,11 +34,14 @@ class BrakeTempView:
         self.outer_radius = 70
         self.bands = 16
         self.setup_disc_geometry() # assigns pixels to bands for heatmap
-        
-
-    
+            
     def build(self, parent_tag):
-        """Called once to populate the window."""
+        """
+        Called once to populate the window.
+
+        Args:
+            parent_tag (String): Tag of the parent window.
+        """
 
         dpg.configure_item("susp_brake", no_scrollbar=True, no_scroll_with_mouse=True)
 
@@ -31,9 +55,10 @@ class BrakeTempView:
         else:
             self.refresh()
 
-
     def refresh(self):
-        """Called after new data loads to update content."""
+        """
+        Called after new data loads to update content.
+        """
 
 
         
@@ -109,6 +134,9 @@ class BrakeTempView:
         dpg.bind_item_theme("channel_temp_window", "cyan_border_theme")
 
     def resize(self):
+        """
+        Resizes the items inside the view.
+        """
         dpg.configure_item("brake_disc_window", width=((dpg.get_viewport_width()-245)/2), height=430) 
         dpg.configure_item("channel_temp_window", width=((dpg.get_viewport_width()-245)/2), height=430) 
 
@@ -116,6 +144,11 @@ class BrakeTempView:
         """
         Converts Brake Temps to RGB values
 
+        Args:
+            temp (float): The temperature being converted
+
+        Return:
+            Tuple: RGB floats
         """
 
         # not exact conversions
@@ -150,10 +183,11 @@ class BrakeTempView:
         # fully red
         else:
             return 1.0, 0.0, 0.0
-
-        
+   
     def setup_disc_geometry(self):
-
+        """
+        Assigns pixels to a band.
+        """
         # center point of the disc
         x_centre = self.size / 2
         y_centre = self.size / 2
@@ -192,10 +226,16 @@ class BrakeTempView:
             for band in range(self.bands)
         ]
 
-
     def generate_disc_texture(self, temperatures):
         """
-        updates the heatmaps
+        Updates the heatmap.
+
+        Args:
+            Temeratures (List): List of temperatures measured during one scan.
+        
+        Returns:
+            List: List of the Pixels and their colours.
+
         """
         # the actual image that is shown (initally all pixels have a 0 value)
         image = np.zeros(

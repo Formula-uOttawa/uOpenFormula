@@ -2,12 +2,30 @@ import dearpygui.dearpygui as dpg
 
 
 class DataFilesView:
+    """
+    View for Imported DataSets.
+
+    Atributes:
+        data_manager (DataManager): Location to DataManager.
+    """
     
     def __init__(self, DataManager):
+        """ 
+        Initalizes the DataFiles View.
+        
+        Args:
+            DataManager (DataManager): Location to DataManager.
+        """
         self.data_manager = DataManager
 
     def build(self, parent_tag):
-        """Called once to populate the window."""
+        """
+        Called once to populate the window.
+
+        Args:
+            parent_tag (String): tag of the DataFiles view window.
+        """
+        
         if (self.data_manager.datasets == {}):
             
             dpg.add_text("Raw Data View", parent=parent_tag)
@@ -18,7 +36,10 @@ class DataFilesView:
              self.refresh()
 
     def refresh(self):
-        """Called after new data loads to update content."""
+        """
+        Called after new data loads to update content.
+        """
+
         if dpg.does_item_exist("show_data"):
                     dpg.delete_item("show_data")
     
@@ -27,6 +48,13 @@ class DataFilesView:
             self.add_file(dataset_id, dataset)
 
     def add_file(self, dataset_id , dataset):
+        """
+        Adds a file to the window.
+
+        Args:
+            dataset_id (String): The id of the dataset.
+            dataset (DataSet): The dataset associated with the dataset_id.
+        """
         with dpg.child_window(tag=f"{dataset_id}_showdata_window",
                               parent="datamanager_view", 
                               auto_resize_y=True, 
@@ -39,8 +67,10 @@ class DataFilesView:
                 dpg.add_separator()
                 dpg.add_text("Dataset information")
 
-
     def table(self):
+        """
+        Builds the dataset table. incomplete.
+        """
         data_array = self.df.to_numpy()
         with dpg.table(header_row=True,
                         policy=dpg.mvTable_SizingFixedFit,

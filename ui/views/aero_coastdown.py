@@ -1,8 +1,14 @@
 import dearpygui.dearpygui as dpg
 
 class AeroCoastdownView:
+    """
+    idk bro, this aint even done. idk why its here.
+    """
     
     def __init__(self, DataManager):
+        """
+        Declares variables needed.
+        """
         self.df = DataManager.get_dataset(0)
 
     def build(self, parent_tag):

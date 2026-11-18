@@ -4,8 +4,24 @@ import time
 
 
 class RenderManager():
+    """
+    Manages the main render loop for dearpygui.
+
+    Attributes: 
+        play_brake_temps (Boolean): Where the brake temp heatmaps are being played.
+        brake_temps (List): 2D list containing all brake temps.
+        index (Int): Current row of dataset. Used to keep track of timestamp.
+        step (int): The step of the index.
+        update_interval (float): The data capture rate (HZ of the sensors). 
+        generate_brake_texture: Numpy pixel texture for heatmap.
+
+    """
 
     def __init__(self):
+        """
+        Declares variables needed for the renderloop.
+        """
+
         self.play_brake_temps = False
         self.brake_temps = []
         self.generate_brake_texture = None
@@ -14,6 +30,9 @@ class RenderManager():
         self.update_interval = 1 / 20 
 
     def start(self):
+        """
+        Starts the render loop.
+        """
 
         last_update = time.perf_counter()
         
