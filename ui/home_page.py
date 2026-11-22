@@ -239,7 +239,7 @@ class HomePage:
                 with dpg.table_row():
                     dpg.add_spacer()
                     dpg.add_image(
-                        load_texture("assets/formula_logo.png"), height=233, width=699
+                        load_texture("Assets/formula_logo.png"), height=233, width=699
                     )
 
                 with dpg.table_row():
@@ -256,7 +256,7 @@ class HomePage:
                                 dpg.add_text("Load Project")
 
                             dpg.add_image_button(
-                                load_texture("assets/file_icon.png"),
+                                load_texture("Assets/file_icon.png"),
                                 tag="load_project_button",
                                 background_color=(0, 0, 0, 0),
                                 frame_padding=0,
@@ -273,7 +273,7 @@ class HomePage:
                                 dpg.add_text("New Project")
 
                             dpg.add_image_button(
-                                load_texture("assets/plus.png"),
+                                load_texture("Assets/plus.png"),
                                 tag="new_project_button",
                                 background_color=(0, 0, 0, 0),
                                 frame_padding=0,
@@ -417,7 +417,7 @@ class HomePage:
             "Powered By Caffeine and Deadlines",
             "Designed By Sleep Deprived Students",
             "Now With 20% Fewer Crashes!",
-            "Run With Hopes And Dreams",
+            "Runs On Hopes And Dreams",
             "Built Different. Runs Slower",
             "Optimized For Developer Happiness",
             "Endurance? Never Heard Of Her",
@@ -471,7 +471,7 @@ class HomePage:
                 ):  
                     self.message = self.get_motm()
 
-                    dpg.add_image( load_texture("assets/formula_logo.png"), width=450, height=150, tag="home_logo")
+                    dpg.add_image( load_texture("Assets/formula_logo.png"), width=450, height=150, tag="home_logo")
 
                     dpg.add_text(self.message, tag="home_message")
                     dpg.bind_item_font("home_message", "Heading_font")
